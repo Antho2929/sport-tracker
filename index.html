@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Mon Tracker Sport</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,sans-serif;background:#0f0f1a;color:#fff;min-height:100vh;padding-bottom:80px}
+.header{padding:20px 20px 10px;background:linear-gradient(180deg,#1a1a2e,#0f0f1a)}
+.header h1{font-size:22px;font-weight:600}
+.header p{color:#888;font-size:13px;margin-top:2px}
+.tabs{display:flex;gap:8px;padding:10px 20px;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{padding:7px 16px;border-radius:20px;font-size:13px;font-weight:500;white-space:nowrap;border:none;cursor:pointer;background:#1e1e35;color:#888}
+.tab.active{background:#7F77DD;color:#fff}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:10px 20px}
+.card{border-radius:16px;padding:14px}
+.card.purple{background:linear-gradient(135deg,#534AB7,#7F77DD)}
+.card.teal{background:linear-gradient(135deg,#0F6E56,#1D9E75)}
+.card.coral{background:linear-gradient(135deg,#993C1D,#D85A30)}
+.card.blue{background:linear-gradient(135deg,#185FA5,#378ADD)}
+.card-icon{font-size:18px;margin-bottom:6px}
+.card-value{font-size:26px;font-weight:600;line-height:1}
+.card-unit{font-size:12px;color:rgba(255,255,255,0.7)}
+.card-label{font-size:11px;color:rgba(255,255,255,0.6);margin-top:4px}
+.section{padding:14px 20px}
+.section-title{color:#aaa;font-size:13px;margin-bottom:10px;font-weight:500}
+.chart-wrap{background:#1a1a2e;border-radius:14px;padding:14px}
+.add-btn{display:block;margin:0 20px 14px;background:#7F77DD;color:#fff;border:none;border-radius:14px;padding:14px;width:calc(100% - 40px);font-size:15px;font-weight:500;cursor:pointer}
+.entry{display:flex;justify-content:space-between;align-items:center;background:#1a1a2e;border-radius:12px;padding:12px 14px;margin-bottom:8px}
+.entry-left span{display:block}
+.entry-name{color:#fff;font-size:14px;font-weight:500}
+.entry-meta{color:#666;font-size:12px;margin-top:2px}
+.entry-cal{color:#7F77DD;font-size:14px;font-weight:500}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;align-items:flex-end}
+.modal.open{display:flex}
+.modal-box{background:#1a1a2e;border-radius:20px 20px 0 0;padding:20px;width:100%;max-height:80vh;overflow-y:auto}
+.modal-title{font-size:17px;font-weight:600;margin-bottom:16px}
+.form-group{margin-bottom:14px}
+.form-group label{display:block;color:#aaa;font-size:13px;margin-bottom:6px}
+.form-group input,select{width:100%;background:#0f0f1a;border:1px solid #333;border-radius:10px;padding:10px 12px;color:#fff;font-size:15px}
+.form-group select option{background:#1a1a2e}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.btn-cancel{background:#2a2a4a;color:#aaa;border:none;border-radius:12px;padding:13px;font-size:14px;cursor:pointer}
+.btn-save{background:#7F77DD;color:#fff;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:500;cursor:pointer}
+.empty{text-align:center;color:#555;padding:20px;font-size:13px}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>Mon Tracker Sport</h1>
+  <p id="date-display"></p>
+</div>
+<div class="tabs">
+  <button class="tab active" onclick="filterTab('tout',this)">Tout</button>
+  <button class="tab" onclick="filterTab('cardio',this)">Cardio</button>
+  <button class="tab" onclick="filterTab('distance',this)">Distance</button>
+  <button class="tab" onclick="filterTab('calories',this)">Calories</button>
+  <button class="tab" onclick="filterTab('muscu',this)">Muscu</button>
+</div>
+<div class="cards">
+  <div class="card purple"><div class="card-icon">❤️</div><div><span class="card-value" id="avg-bpm">--</span> <span class="card-unit">bpm</span></div><div class="card-label">Fréquence moy.</div></div>
+  <div class="card teal"><div class="card-icon">📍</div><div><span class="card-value" id="total-km">--</span> <span class="card-unit">km</span></div><div class="card-label">Distance totale</div></div>
+  <div class="card coral"><div class="card-icon">🔥</div><div><span class="card-value" id="total-cal">--</span> <span class="card-unit">kcal</span></div><div class="card-label">Calories totales</div></div>
+  <div class="card blue"><div class="card-icon">💪</div><div><span class="card-value" id="total-series">--</span> <span class="card-unit">séances</span></div><div class="card-label">Muscu ce mois</div></div>
+</div>
+<div class="section">
+  <div class="section-title">Calories cette semaine</div>
+  <div class="chart-wrap"><canvas id="myChart" height="120"></canvas></div>
+</div>
+<button class="add-btn" onclick="openModal()">+ Ajouter une séance</button>
+<div class="section">
+  <div class="section-title">Séances récentes</div>
+  <div id="entries-list"></div>
+</div>
+<div class="modal" id="modal">
+  <div class="modal-box">
+    <div class="modal-title">Nouvelle séance</div>
+    <div class="form-group">
+      <label>Type de sport</label>
+      <select id="f-type">
+        <option>Course à pied</option>
+        <option>Vélo</option>
+        <option>Natation</option>
+        <option>Musculation</option>
+        <option>Marche</option>
+        <option>Autre</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Durée (min)</label><input type="number" id="f-duree" placeholder="45"></div>
+      <div class="form-group"><label>Calories (kcal)</label><input type="number" id="f-cal" placeholder="400"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Fréquence (bpm)</label><input type="number" id="f-bpm" placeholder="140"></div>
+      <div class="form-group"><label>Distance (km)</label><input type="number" id="f-km" placeholder="5.0" step="0.1"></div>
+    </div>
+    <div class="form-group"><label>Date</label><input type="date" id="f-date"></div>
+    <div class="btn-row">
+      <button class="btn-cancel" onclick="closeModal()">Annuler</button>
+      <button class="btn-save" onclick="saveEntry()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+<script>
+let entries=JSON.parse(localStorage.getItem('sport-entries')||'[]');
+let currentFilter='tout';
+let chart;
+const days=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+const months=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+function init(){
+  const d=new Date();
+  document.getElementById('date-display').textContent=days[d.getDay()]+' '+d.getDate()+' '+months[d.getMonth()]+' '+d.getFullYear();
+  document.getElementById('f-date').value=d.toISOString().split('T')[0];
+  buildChart();
+  renderEntries();
+  updateStats();
+}
+function buildChart(){
+  const ctx=document.getElementById('myChart').getContext('2d');
+  const labels=[];const data=[];
+  for(let i=6;i>=0;i--){
+    const d=new Date();d.setDate(d.getDate()-i);
+    labels.push(days[d.getDay()]);
+    const ds=d.toISOString().split('T')[0];
+    const total=entries.filter(e=>e.date===ds).reduce((s,e)=>s+(e.cal||0),0);
+    data.push(total);
+  }
+  if(chart)chart.destroy();
+  chart=new Chart(ctx,{type:'bar',data:{labels,datasets:[{data,backgroundColor:data.map(v=>v>0?'#7F77DD':'#2a2a4a'),borderRadius:6,borderSkipped:false}]},options:{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#666',font:{size:11}},grid:{display:false}},y:{ticks:{color:'#666',font:{size:11}},grid:{color:'#1e1e35'}}}}});
+}
+function updateStats(){
+  const now=new Date();
+  const month=now.toISOString().slice(0,7);
+  const filtered=currentFilter==='tout'?entries:entries.filter(e=>getCategory(e.type)===currentFilter);
+  const bpms=filtered.filter(e=>e.bpm);
+  document.getElementById('avg-bpm').textContent=bpms.length?Math.round(bpms.reduce((s,e)=>s+e.bpm,0)/bpms.length):'--';
+  const km=filtered.reduce((s,e)=>s+(e.km||0),0);
+  document.getElementById('total-km').textContent=km?km.toFixed(1):'--';
+  const cal=filtered.reduce((s,e)=>s+(e.cal||0),0);
+  document.getElementById('total-cal').textContent=cal||'--';
+  const muscu=entries.filter(e=>e.type==='Musculation'&&e.date.startsWith(month)).length;
+  document.getElementById('total-series').textContent=muscu||'--';
+}
+function getCategory(type){
+  if(['Course à pied','Vélo','Natation','Marche'].includes(type))return'distance';
+  if(type==='Musculation')return'muscu';
+  return'cardio';
+}
+function renderEntries(){
+  const list=document.getElementById('entries-list');
+  const filtered=currentFilter==='tout'?entries:entries.filter(e=>getCategory(e.type)===currentFilter);
+  const sorted=[...filtered].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,20);
+  if(!sorted.length){list.innerHTML='<div class="empty">Aucune séance enregistrée</div>';return;}
+  list.innerHTML=sorted.map((e,i)=>`<div class="entry"><div class="entry-left"><span class="entry-name">${e.type}</span><span class="entry-meta">${e.date} · ${e.duree} min${e.km?' · '+e.km+'km':''}</span></div><div class="entry-cal">${e.cal?e.cal+' kcal':e.bpm?e.bpm+' bpm':''}</div></div>`).join('');
+}
+function filterTab(f,btn){
+  currentFilter=f;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  renderEntries();updateStats();
+}
+function openModal(){document.getElementById('modal').classList.add('open');}
+function closeModal(){document.getElementById('modal').classList.remove('open');}
+function saveEntry(){
+  const entry={type:document.getElementById('f-type').value,duree:parseInt(document.getElementById('f-duree').value)||0,cal:parseInt(document.getElementById('f-cal').value)||0,bpm:parseInt(document.getElementById('f-bpm').value)||0,km:parseFloat(document.getElementById('f-km').value)||0,date:document.getElementById('f-date').value};
+  entries.unshift(entry);
+  localStorage.setItem('sport-entries',JSON.stringify(entries));
+  closeModal();buildChart();renderEntries();updateStats();
+}
+init();
+</script>
+</body>
+</html>
