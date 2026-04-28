@@ -1,179 +1,901 @@
 <!DOCTYPE html>
+
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Mon Tracker Sport</title>
+<title>AC SPORT TRACKER</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
+:root {
+--black: #020204;
+--dark1: #08080f;
+--dark2: #0e0e18;
+--dark3: #141422;
+--mauve: #9333ea;
+--mauve-light: #c084fc;
+--mauve-dark: #6b21a8;
+--rose: #ff0080;
+--rose-flash: #ff2d9b;
+--rose-light: #ff6ec7;
+--rose-dark: #c0006a;
+--gold: #fbbf24;
+--gold-light: #fde68a;
+--green-check: #22c55e;
+--text: #f0e6ff;
+--text-muted: #5a5a7a;
+--border: rgba(147,51,234,0.18);
+}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,sans-serif;background:#0f0f1a;color:#fff;min-height:100vh;padding-bottom:80px}
-.header{padding:20px 20px 10px;background:linear-gradient(180deg,#1a1a2e,#0f0f1a)}
-.header h1{font-size:22px;font-weight:600}
-.header p{color:#888;font-size:13px;margin-top:2px}
-.tabs{display:flex;gap:8px;padding:10px 20px;overflow-x:auto;scrollbar-width:none}
+html{background:var(--black)}
+body{font-family:'Rajdhani',sans-serif;background:var(--black);color:var(--text);min-height:100vh;padding-bottom:100px;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 70% 35% at 15% 5%,rgba(147,51,234,0.12) 0%,transparent 65%),radial-gradient(ellipse 60% 30% at 85% 85%,rgba(255,0,128,0.1) 0%,transparent 65%);pointer-events:none;z-index:0}
+
+/* HEADER */
+.dragon-header{position:relative;width:100%;height:240px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#030008 0%,#060010 70%,transparent 100%)}
+
+/* AC LOGO */
+.ac-logo{position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:4;display:flex;flex-direction:column;align-items:center}
+.ac-letters{font-family:‘Cinzel Decorative’,serif;font-size:32px;font-weight:700;letter-spacing:8px;background:linear-gradient(135deg,#c084fc 0%,#ff0080 50%,#fbbf24 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 8px rgba(255,0,128,0.6));line-height:1}
+.ac-underline{width:60px;height:2px;background:linear-gradient(90deg,var(–mauve),var(–rose));margin-top:3px;border-radius:2px;box-shadow:0 0 8px rgba(255,0,128,0.5)}
+
+.dragon-svg{width:300px;height:195px;filter:drop-shadow(0 0 12px rgba(255,120,0,0.7)) drop-shadow(0 0 28px rgba(147,51,234,0.5)) drop-shadow(0 0 55px rgba(255,0,128,0.2));animation:dragonFloat 5s ease-in-out infinite;position:relative;z-index:2;margin-top:45px}
+@keyframes dragonFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.app-subtitle{position:absolute;bottom:5px;left:0;right:0;text-align:center;font-family:‘Cinzel Decorative’,serif;font-size:9px;letter-spacing:4px;color:var(–rose-light);text-shadow:0 0 12px rgba(255,0,128,0.8);z-index:3}
+
+/* GIRLS */
+.anime-strip{display:flex;justify-content:space-around;align-items:flex-end;padding:0 4px 0;height:120px;position:relative;z-index:1;overflow:hidden}
+.anime-strip::after{content:’’;position:absolute;bottom:0;left:0;right:0;height:32px;background:linear-gradient(0deg,var(–dark2),transparent);z-index:10}
+.girl-wrap{width:76px;height:118px;flex-shrink:0;animation:girlFloat 4s ease-in-out infinite;filter:drop-shadow(0 0 6px rgba(255,0,128,0.35)) drop-shadow(0 0 16px rgba(147,51,234,0.25))}
+.girl-wrap:nth-child(2){animation-delay:1.4s}
+.girl-wrap:nth-child(3){animation-delay:2.8s}
+@keyframes girlFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+
+/* NAV */
+.nav-tabs{display:flex;gap:0;padding:8px 12px;position:relative;z-index:1;justify-content:center}
+.nav-tab{padding:7px 14px;font-size:10px;font-weight:700;border:1px solid rgba(147,51,234,0.3);cursor:pointer;background:var(–dark2);color:var(–text-muted);letter-spacing:1px;text-transform:uppercase;transition:all 0.2s;font-family:‘Rajdhani’,sans-serif}
+.nav-tab:first-child{border-radius:10px 0 0 10px}
+.nav-tab:last-child{border-radius:0 10px 10px 0}
+.nav-tab.active{background:linear-gradient(135deg,var(–mauve-dark),var(–rose-dark));color:#fff;border-color:transparent;box-shadow:0 0 12px rgba(255,0,128,0.4)}
+
+/* PAGES */
+.page{display:none}.page.active{display:block}
+
+/* TABS */
+.tabs{display:flex;gap:6px;padding:6px 12px;overflow-x:auto;scrollbar-width:none;position:relative;z-index:1}
 .tabs::-webkit-scrollbar{display:none}
-.tab{padding:7px 16px;border-radius:20px;font-size:13px;font-weight:500;white-space:nowrap;border:none;cursor:pointer;background:#1e1e35;color:#888}
-.tab.active{background:#7F77DD;color:#fff}
-.cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:10px 20px}
-.card{border-radius:16px;padding:14px}
-.card.purple{background:linear-gradient(135deg,#534AB7,#7F77DD)}
-.card.teal{background:linear-gradient(135deg,#0F6E56,#1D9E75)}
-.card.coral{background:linear-gradient(135deg,#993C1D,#D85A30)}
-.card.blue{background:linear-gradient(135deg,#185FA5,#378ADD)}
-.card-icon{font-size:18px;margin-bottom:6px}
-.card-value{font-size:26px;font-weight:600;line-height:1}
-.card-unit{font-size:12px;color:rgba(255,255,255,0.7)}
-.card-label{font-size:11px;color:rgba(255,255,255,0.6);margin-top:4px}
-.section{padding:14px 20px}
-.section-title{color:#aaa;font-size:13px;margin-bottom:10px;font-weight:500}
-.chart-wrap{background:#1a1a2e;border-radius:14px;padding:14px}
-.add-btn{display:block;margin:0 20px 14px;background:#7F77DD;color:#fff;border:none;border-radius:14px;padding:14px;width:calc(100% - 40px);font-size:15px;font-weight:500;cursor:pointer}
-.entry{display:flex;justify-content:space-between;align-items:center;background:#1a1a2e;border-radius:12px;padding:12px 14px;margin-bottom:8px}
-.entry-left span{display:block}
-.entry-name{color:#fff;font-size:14px;font-weight:500}
-.entry-meta{color:#666;font-size:12px;margin-top:2px}
-.entry-cal{color:#7F77DD;font-size:14px;font-weight:500}
-.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;align-items:flex-end}
+.tab{padding:5px 12px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap;border:1px solid rgba(147,51,234,0.25);cursor:pointer;background:var(–dark2);color:var(–text-muted);letter-spacing:1px;text-transform:uppercase;transition:all 0.2s;font-family:‘Rajdhani’,sans-serif}
+.tab.active{background:linear-gradient(135deg,var(–mauve-dark),var(–rose-dark));color:#fff;border-color:transparent;box-shadow:0 0 10px rgba(255,0,128,0.4)}
+
+/* CARDS */
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:8px 12px;position:relative;z-index:1}
+.card{border-radius:16px;padding:14px;border:1px solid rgba(147,51,234,0.15);position:relative;overflow:hidden;transition:transform 0.15s}
+.card:active{transform:scale(0.97)}
+.card.c1{background:linear-gradient(145deg,#0a0018,#1e0545);box-shadow:0 4px 24px rgba(147,51,234,0.25)}
+.card.c2{background:linear-gradient(145deg,#0d0010,#3d0030);box-shadow:0 4px 24px rgba(255,0,128,0.22)}
+.card.c3{background:linear-gradient(145deg,#080012,#280040);box-shadow:0 4px 20px rgba(107,33,168,0.3)}
+.card.c4{background:linear-gradient(145deg,#0a0008,#350020);box-shadow:0 4px 20px rgba(255,0,128,0.18)}
+.card-glyph{font-size:18px;margin-bottom:5px;display:block}
+.card-value{font-size:28px;font-weight:700;line-height:1}
+.card.c1 .card-value,.card.c3 .card-value{color:var(–mauve-light);text-shadow:0 0 12px rgba(147,51,234,0.8)}
+.card.c2 .card-value,.card.c4 .card-value{color:var(–rose-light);text-shadow:0 0 12px rgba(255,0,128,0.8)}
+.card-unit{font-size:11px;color:rgba(255,255,255,0.3)}
+.card-label{font-size:10px;color:rgba(255,255,255,0.25);margin-top:4px;letter-spacing:1.5px;text-transform:uppercase}
+
+/* DIVIDER */
+.rune-divider{display:flex;align-items:center;gap:8px;padding:6px 12px;position:relative;z-index:1}
+.rune-line{flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(255,0,128,0.4),rgba(147,51,234,0.4),transparent)}
+.rune-symbol{color:var(–rose-flash);font-size:12px;letter-spacing:5px;text-shadow:0 0 10px var(–rose-flash)}
+
+/* SECTION */
+.section{padding:6px 12px;position:relative;z-index:1}
+.section-title{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(–rose-light);margin-bottom:8px;font-weight:700;text-shadow:0 0 8px rgba(255,0,128,0.5)}
+.chart-wrap{background:var(–dark2);border:1px solid rgba(255,0,128,0.12);border-radius:14px;padding:12px}
+
+/* ADD BTN */
+.add-btn{display:block;margin:10px 12px;background:linear-gradient(135deg,#6b21a8 0%,#c0006a 50%,#ff0080 100%);color:#fff;border:none;border-radius:14px;padding:14px;width:calc(100% - 24px);font-size:13px;font-weight:700;cursor:pointer;letter-spacing:3px;text-transform:uppercase;font-family:‘Rajdhani’,sans-serif;position:relative;z-index:1;box-shadow:0 4px 24px rgba(255,0,128,0.45);transition:transform 0.15s}
+.add-btn:active{transform:scale(0.98)}
+
+/* ENTRIES */
+.entry{display:flex;justify-content:space-between;align-items:center;background:var(–dark2);border:1px solid rgba(147,51,234,0.12);border-radius:12px;padding:12px 14px;margin-bottom:8px;position:relative;overflow:hidden}
+.entry::before{content:’’;position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(–mauve),var(–rose-flash))}
+.entry-name{color:var(–text);font-size:14px;font-weight:600}
+.entry-meta{color:var(–text-muted);font-size:11px;margin-top:2px}
+.entry-cal{color:var(–rose-flash);font-size:14px;font-weight:700;text-shadow:0 0 8px rgba(255,0,128,0.6)}
+.empty{text-align:center;color:var(–text-muted);padding:24px;font-size:12px;letter-spacing:2px}
+
+/* ===== DAILY CHECKUP ===== */
+.checkup-header{padding:14px 12px 8px;position:relative;z-index:1}
+.checkup-date{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(–text-muted);margin-bottom:4px}
+.checkup-title{font-family:‘Cinzel Decorative’,serif;font-size:14px;color:var(–mauve-light);text-shadow:0 0 10px rgba(147,51,234,0.6);letter-spacing:2px}
+.checkup-progress{margin:10px 12px 6px;position:relative;z-index:1}
+.cp-bar{background:var(–dark3);border-radius:10px;height:8px;overflow:hidden;border:1px solid rgba(34,197,94,0.2)}
+.cp-fill{height:100%;border-radius:10px;transition:width 0.6s ease;background:linear-gradient(90deg,var(–mauve),var(–green-check))}
+.cp-text{font-size:10px;letter-spacing:2px;text-align:center;margin:6px 0 12px;position:relative;z-index:1}
+.checkup-tasks{padding:0 12px;position:relative;z-index:1;display:flex;flex-direction:column;gap:10px}
+.task-card{background:var(–dark2);border:1px solid rgba(147,51,234,0.15);border-radius:16px;padding:16px 14px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden}
+.task-card::before{content:’’;position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:4px 0 0 4px}
+.task-card.task-sport::before{background:linear-gradient(180deg,var(–mauve),var(–rose))}
+.task-card.task-water::before{background:linear-gradient(180deg,#38bdf8,#0ea5e9)}
+.task-card.task-supps::before{background:linear-gradient(180deg,var(–gold),#f59e0b)}
+.task-card.done{border-color:rgba(34,197,94,0.3);background:linear-gradient(135deg,rgba(34,197,94,0.06),rgba(34,197,94,0.02))}
+.task-card.done::after{content:’’;position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(34,197,94,0.05),transparent)}
+.task-icon-wrap{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;transition:all 0.2s}
+.task-sport .task-icon-wrap{background:linear-gradient(135deg,#1a0040,#2d0060)}
+.task-water .task-icon-wrap{background:linear-gradient(135deg,#0c2040,#0c3060)}
+.task-supps .task-icon-wrap{background:linear-gradient(135deg,#201000,#402000)}
+.task-card.done .task-icon-wrap{background:linear-gradient(135deg,rgba(34,197,94,0.15),rgba(34,197,94,0.08));box-shadow:0 0 12px rgba(34,197,94,0.3)}
+.task-content{flex:1}
+.task-name{font-size:14px;font-weight:700;letter-spacing:0.5px;margin-bottom:3px}
+.task-sport .task-name{color:var(–mauve-light)}
+.task-water .task-name{color:#7dd3fc}
+.task-supps .task-name{color:var(–gold-light)}
+.task-card.done .task-name{color:var(–green-check)}
+.task-desc{font-size:11px;color:var(–text-muted);letter-spacing:0.5px}
+.task-check{width:32px;height:32px;border-radius:50%;border:2px solid rgba(147,51,234,0.3);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;transition:all 0.3s;background:var(–dark3)}
+.task-card.done .task-check{background:var(–green-check);border-color:var(–green-check);box-shadow:0 0 14px rgba(34,197,94,0.5);transform:scale(1.1)}
+.checkup-streak{margin:14px 12px;background:var(–dark2);border:1px solid rgba(251,191,36,0.2);border-radius:14px;padding:14px;display:flex;align-items:center;gap:12px;position:relative;z-index:1}
+.streak-icon{font-size:28px}
+.streak-text{flex:1}
+.streak-num{font-size:22px;font-weight:700;color:var(–gold);text-shadow:0 0 10px rgba(251,191,36,0.6);line-height:1}
+.streak-label{font-size:10px;color:var(–text-muted);letter-spacing:2px;text-transform:uppercase;margin-top:2px}
+.checkup-reset{font-size:9px;color:var(–text-muted);letter-spacing:2px;margin-left:auto;padding:6px 10px;background:var(–dark3);border:1px solid rgba(147,51,234,0.2);border-radius:8px;cursor:pointer;font-family:‘Rajdhani’,sans-serif;text-transform:uppercase}
+
+/* TROPHIES */
+.trophy-header{padding:12px 12px 6px;position:relative;z-index:1}
+.trophy-header-title{font-family:‘Cinzel Decorative’,serif;font-size:13px;color:var(–gold);text-shadow:0 0 14px rgba(251,191,36,0.7);letter-spacing:2px;margin-bottom:4px}
+.trophy-subtitle{font-size:11px;color:var(–text-muted);letter-spacing:1px}
+.trophy-count-bar{margin:8px 12px;background:var(–dark3);border-radius:10px;height:6px;overflow:hidden;position:relative;z-index:1;border:1px solid rgba(251,191,36,0.2)}
+.trophy-count-fill{height:100%;background:linear-gradient(90deg,var(–mauve),var(–gold));border-radius:10px;transition:width 0.8s ease}
+.trophy-count-text{font-size:10px;color:var(–gold);letter-spacing:2px;text-align:center;margin:4px 0 10px;text-shadow:0 0 8px rgba(251,191,36,0.5);position:relative;z-index:1}
+.trophies-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 12px 14px;position:relative;z-index:1}
+.trophy-card{border-radius:14px;padding:12px 10px;border:1px solid rgba(147,51,234,0.15);background:var(–dark2);position:relative;overflow:hidden;text-align:center;transition:transform 0.15s}
+.trophy-card.unlocked{background:linear-gradient(145deg,#12002a,#250050);border-color:rgba(251,191,36,0.3);box-shadow:0 4px 16px rgba(251,191,36,0.15),inset 0 1px 0 rgba(251,191,36,0.1)}
+.trophy-card.unlocked::before{content:’’;position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(251,191,36,0.08),transparent)}
+.trophy-card.locked{opacity:0.4;filter:grayscale(0.7)}
+.trophy-icon{font-size:28px;margin-bottom:5px;display:block;line-height:1}
+.trophy-name{font-family:‘Cinzel Decorative’,serif;font-size:8px;letter-spacing:1px;color:var(–gold-light);margin-bottom:3px;line-height:1.3}
+.trophy-card.locked .trophy-name{color:var(–text-muted)}
+.trophy-desc{font-size:9px;color:var(–text-muted);line-height:1.4;letter-spacing:0.5px}
+.trophy-card.unlocked .trophy-desc{color:rgba(240,230,255,0.6)}
+.trophy-badge{position:absolute;top:6px;right:6px;width:16px;height:16px;background:linear-gradient(135deg,var(–gold),#f59e0b);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px}
+.trophy-lock{position:absolute;top:6px;right:6px;font-size:11px;opacity:0.4}
+.trophy-new-badge{position:absolute;top:6px;left:6px;background:var(–rose-flash);color:white;font-size:7px;font-weight:700;padding:2px 5px;border-radius:4px;letter-spacing:1px;box-shadow:0 0 8px rgba(255,0,128,0.6)}
+.trophy-rarity{font-size:8px;letter-spacing:2px;text-transform:uppercase;margin-top:4px;font-weight:700}
+.rarity-common{color:#94a3b8}.rarity-rare{color:#60a5fa}.rarity-epic{color:var(–mauve-light)}.rarity-legendary{color:var(–gold);text-shadow:0 0 8px rgba(251,191,36,0.6)}
+
+/* TOAST */
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#1a0040,#3d0030);border:1px solid var(–gold);border-radius:14px;padding:12px 18px;z-index:999;text-align:center;box-shadow:0 8px 30px rgba(251,191,36,0.3);animation:toastIn 0.4s ease,toastOut 0.4s ease 2.6s forwards;min-width:220px}
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(-20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+@keyframes toastOut{to{opacity:0;transform:translateX(-50%) translateY(-20px)}}
+.toast-icon{font-size:28px;display:block;margin-bottom:4px}
+.toast-label{font-size:9px;letter-spacing:3px;color:var(–gold);text-transform:uppercase}
+.toast-name{font-family:‘Cinzel Decorative’,serif;font-size:12px;color:var(–gold-light);margin-top:2px}
+
+/* MODAL */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:100;align-items:flex-end;backdrop-filter:blur(6px)}
 .modal.open{display:flex}
-.modal-box{background:#1a1a2e;border-radius:20px 20px 0 0;padding:20px;width:100%;max-height:80vh;overflow-y:auto}
-.modal-title{font-size:17px;font-weight:600;margin-bottom:16px}
-.form-group{margin-bottom:14px}
-.form-group label{display:block;color:#aaa;font-size:13px;margin-bottom:6px}
-.form-group input,select{width:100%;background:#0f0f1a;border:1px solid #333;border-radius:10px;padding:10px 12px;color:#fff;font-size:15px}
-.form-group select option{background:#1a1a2e}
+.modal-box{background:var(–dark1);border:1px solid rgba(255,0,128,0.2);border-top:2px solid rgba(255,0,128,0.4);border-radius:24px 24px 0 0;padding:22px 16px;width:100%;max-height:82vh;overflow-y:auto;box-shadow:0 -8px 50px rgba(255,0,128,0.2)}
+.modal-title{font-family:‘Cinzel Decorative’,serif;font-size:12px;color:var(–rose-light);margin-bottom:18px;text-align:center;letter-spacing:3px;text-shadow:0 0 14px rgba(255,0,128,0.7)}
+.form-group{margin-bottom:12px}
+.form-group label{display:block;color:var(–text-muted);font-size:10px;margin-bottom:5px;letter-spacing:2px;text-transform:uppercase}
+.form-group input,.form-group select{width:100%;background:var(–dark3);border:1px solid rgba(147,51,234,0.2);border-radius:10px;padding:10px 12px;color:var(–text);font-size:15px;font-family:‘Rajdhani’,sans-serif;font-weight:500;outline:none;transition:border-color 0.2s}
+.form-group input:focus,.form-group select:focus{border-color:var(–rose-flash);box-shadow:0 0 12px rgba(255,0,128,0.25)}
+.form-group select option{background:var(–dark2)}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .btn-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
-.btn-cancel{background:#2a2a4a;color:#aaa;border:none;border-radius:12px;padding:13px;font-size:14px;cursor:pointer}
-.btn-save{background:#7F77DD;color:#fff;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:500;cursor:pointer}
-.empty{text-align:center;color:#555;padding:20px;font-size:13px}
+.btn-cancel{background:var(–dark3);color:var(–text-muted);border:1px solid rgba(147,51,234,0.2);border-radius:12px;padding:13px;font-size:12px;cursor:pointer;font-family:‘Rajdhani’,sans-serif;letter-spacing:1px;text-transform:uppercase}
+.btn-save{background:linear-gradient(135deg,var(–mauve-dark),var(–rose));color:#fff;border:none;border-radius:12px;padding:13px;font-size:12px;font-weight:700;cursor:pointer;font-family:‘Rajdhani’,sans-serif;letter-spacing:2px;text-transform:uppercase;box-shadow:0 4px 16px rgba(255,0,128,0.4)}
 </style>
+
 </head>
 <body>
-<div class="header">
-  <h1>Mon Tracker Sport</h1>
-  <p id="date-display"></p>
+
+<!-- HEADER -->
+
+<div class="dragon-header">
+<!-- AC LOGO -->
+<div class="ac-logo">
+<div class="ac-letters">AC</div>
+<div class="ac-underline"></div>
 </div>
+
+<!-- VIKING SCENE SVG -->
+
+<svg class="dragon-svg" viewBox="0 0 300 195" fill="none" xmlns="http://www.w3.org/2000/svg">
+<!-- SCENE: Viking longship on dark sea under aurora sky -->
+<defs>
+<linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#020008"/><stop offset="60%" stop-color="#0a0018"/><stop offset="100%" stop-color="#060012"/></linearGradient>
+<linearGradient id="aurora1" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#9333ea" stop-opacity="0"/><stop offset="40%" stop-color="#c084fc" stop-opacity="0.5"/><stop offset="70%" stop-color="#ff2d9b" stop-opacity="0.4"/><stop offset="100%" stop-color="#ff0080" stop-opacity="0"/></linearGradient>
+<linearGradient id="aurora2" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#ff0080" stop-opacity="0"/><stop offset="30%" stop-color="#7c3aed" stop-opacity="0.35"/><stop offset="60%" stop-color="#22d3ee" stop-opacity="0.25"/><stop offset="100%" stop-color="#9333ea" stop-opacity="0"/></linearGradient>
+<linearGradient id="sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0a0020"/><stop offset="100%" stop-color="#020008"/></linearGradient>
+<linearGradient id="ship" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2a1808"/><stop offset="100%" stop-color="#160c04"/></linearGradient>
+<linearGradient id="sail" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1e0040"/><stop offset="100%" stop-color="#120028"/></linearGradient>
+<linearGradient id="goldG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fde68a"/><stop offset="100%" stop-color="#f59e0b"/></linearGradient>
+</defs>
+<!-- Sky -->
+<rect width="300" height="195" fill="url(#sky)"/>
+<!-- Stars -->
+<circle cx="20" cy="15" r="0.8" fill="white" opacity="0.7"/>
+<circle cx="45" cy="8" r="0.6" fill="white" opacity="0.6"/>
+<circle cx="80" cy="20" r="0.8" fill="white" opacity="0.5"/>
+<circle cx="120" cy="10" r="0.6" fill="white" opacity="0.7"/>
+<circle cx="160" cy="6" r="0.8" fill="white" opacity="0.6"/>
+<circle cx="200" cy="14" r="0.6" fill="white" opacity="0.5"/>
+<circle cx="240" cy="8" r="0.8" fill="white" opacity="0.7"/>
+<circle cx="275" cy="18" r="0.6" fill="white" opacity="0.6"/>
+<circle cx="58" cy="28" r="0.5" fill="white" opacity="0.5"/>
+<circle cx="140" cy="22" r="0.5" fill="white" opacity="0.6"/>
+<circle cx="220" cy="25" r="0.5" fill="white" opacity="0.5"/>
+<!-- AURORA bands -->
+<path d="M0 40 Q75 25 150 35 Q225 45 300 30" stroke="none" fill="none"/>
+<rect x="0" y="25" width="300" height="30" fill="url(#aurora1)" opacity="0.8"/>
+<rect x="0" y="40" width="300" height="25" fill="url(#aurora2)" opacity="0.7"/>
+<!-- Aurora shimmer details -->
+<path d="M30 30 Q90 20 150 28 Q210 36 270 26" stroke="#c084fc" stroke-width="1" fill="none" opacity="0.3"/>
+<path d="M0 45 Q80 35 160 42 Q240 49 300 38" stroke="#ff2d9b" stroke-width="0.8" fill="none" opacity="0.25"/>
+<!-- Moon -->
+<circle cx="250" cy="22" r="12" fill="#1a1430"/>
+<circle cx="250" cy="22" r="10" fill="#f8f0e0" opacity="0.9"/>
+<circle cx="245" cy="20" r="8" fill="#1a1430" opacity="0.3"/>
+<!-- SEA -->
+<path d="M0 130 Q75 122 150 128 Q225 134 300 126 L300 195 L0 195Z" fill="url(#sea)"/>
+<!-- Sea waves -->
+<path d="M0 132 Q38 126 75 131 Q113 136 150 131 Q188 126 225 131 Q263 136 300 130" stroke="#1a0040" stroke-width="1.5" fill="none" opacity="0.7"/>
+<path d="M0 140 Q50 135 100 139 Q150 143 200 138 Q250 133 300 138" stroke="#120030" stroke-width="1" fill="none" opacity="0.5"/>
+<!-- LONGSHIP hull -->
+<path d="M40 145 Q50 132 150 128 Q250 132 260 145 Q250 152 150 155 Q50 152 40 145Z" fill="url(#ship)"/>
+<!-- Hull planks -->
+<path d="M50 135 Q150 131 250 135" stroke="#3a2010" stroke-width="0.8" opacity="0.5"/>
+<path d="M45 140 Q150 136 255 140" stroke="#3a2010" stroke-width="0.8" opacity="0.5"/>
+<path d="M44 147 Q150 143 256 147" stroke="#3a2010" stroke-width="0.6" opacity="0.4"/>
+<!-- Shields on ship side -->
+<circle cx="80" cy="142" r="7" fill="#1a0a2e" stroke="url(#goldG)" stroke-width="1"/>
+<circle cx="80" cy="142" r="3" fill="url(#goldG)" opacity="0.7"/>
+<circle cx="110" cy="140" r="7" fill="#2a0010" stroke="url(#goldG)" stroke-width="1"/>
+<circle cx="110" cy="140" r="3" fill="url(#goldG)" opacity="0.7"/>
+<circle cx="140" cy="139" r="7" fill="#1a0a2e" stroke="url(#goldG)" stroke-width="1"/>
+<circle cx="140" cy="139" r="3" fill="url(#goldG)" opacity="0.7"/>
+<circle cx="170" cy="139" r="7" fill="#2a0010" stroke="url(#goldG)" stroke-width="1"/>
+<circle cx="170" cy="139" r="3" fill="url(#goldG)" opacity="0.7"/>
+<circle cx="200" cy="140" r="7" fill="#1a0a2e" stroke="url(#goldG)" stroke-width="1"/>
+<circle cx="200" cy="140" r="3" fill="url(#goldG)" opacity="0.7"/>
+<circle cx="226" cy="142" r="7" fill="#2a0010" stroke="url(#goldG)" stroke-width="1"/>
+<circle cx="226" cy="142" r="3" fill="url(#goldG)" opacity="0.7"/>
+<!-- Dragon prow -->
+<path d="M40 145 Q30 138 22 128 Q18 120 22 116 Q28 118 32 128 Q36 136 40 142Z" fill="#2a1808"/>
+<path d="M22 116 Q18 110 20 104 Q24 108 24 116Z" fill="#1e0e04"/>
+<!-- Dragon prow head -->
+<path d="M20 104 Q14 98 16 92 Q20 94 22 100Z" fill="#2a1808"/>
+<path d="M16 92 Q10 88 12 82 Q16 85 18 92Z" fill="#1e0e04"/>
+<!-- Prow spikes -->
+<path d="M12 82 L8 72 L14 78Z" fill="#3a2010"/>
+<path d="M16 88 L10 80 L18 84Z" fill="#3a2010"/>
+<!-- Gold trim prow -->
+<path d="M40 142 Q30 136 22 125 Q18 118 20 112" stroke="url(#goldG)" stroke-width="1" opacity="0.6" fill="none"/>
+<!-- Stern post -->
+<path d="M260 145 Q270 136 278 124 Q282 116 278 110 Q274 114 272 122 Q268 132 260 142Z" fill="#2a1808"/>
+<path d="M260 142 Q270 133 278 120 Q282 112 278 108" stroke="url(#goldG)" stroke-width="1" opacity="0.5" fill="none"/>
+<!-- MAST -->
+<line x1="150" y1="50" x2="150" y2="140" stroke="#3a2010" stroke-width="4" stroke-linecap="round"/>
+<line x1="150" y1="50" x2="150" y2="140" stroke="#2a1808" stroke-width="2"/>
+<!-- Yard arm -->
+<line x1="90" y1="72" x2="210" y2="72" stroke="#2a1808" stroke-width="3" stroke-linecap="round"/>
+<!-- SAIL dark purple with rune -->
+<path d="M92 72 Q92 110 108 128 Q130 135 150 135 Q170 135 192 128 Q208 110 208 72Z" fill="url(#sail)"/>
+<!-- Sail rune stitching -->
+<path d="M150 80 L144 96 L150 92 L144 108" stroke="#9333ea" stroke-width="2" stroke-linecap="round" opacity="0.8"/>
+<path d="M130 84 Q124 90 126 100" stroke="#ff2d9b" stroke-width="1.2" opacity="0.5"/>
+<path d="M170 84 Q176 90 174 100" stroke="#ff2d9b" stroke-width="1.2" opacity="0.5"/>
+<!-- Sail border runes -->
+<path d="M92 72 Q92 110 108 128" stroke="#7c3aed" stroke-width="1" opacity="0.4" fill="none"/>
+<path d="M208 72 Q208 110 192 128" stroke="#7c3aed" stroke-width="1" opacity="0.4" fill="none"/>
+<!-- Ropes -->
+<line x1="92" y1="72" x2="150" y2="50" stroke="#3a2010" stroke-width="1" opacity="0.7"/>
+<line x1="208" y1="72" x2="150" y2="50" stroke="#3a2010" stroke-width="1" opacity="0.7"/>
+<!-- WARRIORS silhouettes on ship (3 figures) -->
+<!-- Odin left -->
+<rect x="88" y="118" width="10" height="22" rx="3" fill="#1a0a28"/>
+<circle cx="93" cy="112" r="7" fill="#1a0a28"/>
+<!-- Spear Odin -->
+<line x1="96" y1="100" x2="96" y2="140" stroke="#3a2808" stroke-width="1.5"/>
+<path d="M94 100 L96 94 L98 100Z" fill="#9ab0b8"/>
+<!-- Thor center prominent -->
+<rect x="143" y="115" width="14" height="25" rx="4" fill="#1e2838"/>
+<circle cx="150" cy="108" r="9" fill="#1e2838"/>
+<!-- Thor hammer raised -->
+<line x1="152" y1="105" x2="148" y2="80" stroke="#3a2808" stroke-width="2"/>
+<rect x="143" y="74" width="12" height="9" rx="2" fill="#5a6070"/>
+<!-- Valkyrie right -->
+<rect x="198" y="118" width="10" height="22" rx="3" fill="#2a1040"/>
+<circle cx="203" cy="112" r="7" fill="#2a1040"/>
+<!-- Valkyrie sword -->
+<line x1="205" y1="100" x2="210" y2="76" stroke="#8a9ab0" stroke-width="1.5"/>
+<path d="M208 78 L210 74 L212 78Z" fill="#c0c8d8"/>
+<!-- Shield on Valkyrie arm -->
+<circle cx="196" cy="118" r="6" fill="#1a0a2e" stroke="url(#goldG)" stroke-width="1"/>
+<circle cx="196" cy="118" r="2.5" fill="url(#goldG)" opacity="0.7"/>
+<!-- Sea reflection glow -->
+<ellipse cx="150" cy="158" rx="60" ry="8" fill="#9333ea" opacity="0.06"/>
+<ellipse cx="150" cy="162" rx="40" ry="5" fill="#ff0080" opacity="0.05"/>
+</svg>
+
+<div class="app-subtitle">✦ DARK SPORT TRACKER ✦</div>
+</div>
+
+<!-- VIKING WARRIORS STRIP -->
+
+<div class="anime-strip">
+
+<!-- WARRIOR 1: Odin — old god, ravens, spear, cloak -->
+
+<svg class="girl-wrap" viewBox="0 0 76 118" fill="none">
+<defs>
+<linearGradient id="v1cloak" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1a0a2e"/><stop offset="100%" stop-color="#0a0418"/></linearGradient>
+<linearGradient id="v1armor" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2a2a3a"/><stop offset="100%" stop-color="#161622"/></linearGradient>
+<linearGradient id="v1skin" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#d4a878"/><stop offset="100%" stop-color="#b88858"/></linearGradient>
+<linearGradient id="v1gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fde68a"/><stop offset="100%" stop-color="#f59e0b"/></linearGradient>
+</defs>
+<!-- Wide dark cloak -->
+<path d="M4 55 Q0 70 0 90 Q0 105 4 118 L22 118 Q20 98 20 80 Q21 65 38 60 Q55 65 56 80 Q56 98 54 118 L72 118 Q76 105 76 90 Q76 70 72 55 Q62 45 38 43 Q14 45 4 55Z" fill="url(#v1cloak)"/>
+<path d="M4 55 Q2 70 1 90" stroke="#9333ea" stroke-width="1" opacity="0.4"/>
+<path d="M72 55 Q74 70 75 90" stroke="#9333ea" stroke-width="1" opacity="0.4"/>
+<path d="M4 110 Q38 115 72 110" stroke="#fbbf24" stroke-width="1" opacity="0.4"/>
+<!-- Armor chest -->
+<path d="M24 58 Q38 54 52 58 L52 80 Q38 84 24 80Z" fill="url(#v1armor)"/>
+<path d="M24 64 Q38 68 52 64" stroke="#3a3a50" stroke-width="1.2" fill="none"/>
+<path d="M24 72 Q38 76 52 72" stroke="#3a3a50" stroke-width="1.2" fill="none"/>
+<text x="38" y="74" text-anchor="middle" font-size="10" fill="#fde68a" opacity="0.8" font-family="serif">ᚢ</text>
+<rect x="22" y="79" width="32" height="5" rx="2" fill="#3a2010"/>
+<rect x="35" y="78" width="6" height="7" rx="1" fill="#fde68a"/>
+<!-- Arms -->
+<path d="M24 59 Q12 66 8 80 Q13 73 17 67 Q20 62 24 59Z" fill="url(#v1cloak)"/>
+<path d="M52 59 Q64 66 68 80 Q63 73 59 67 Q56 62 52 59Z" fill="url(#v1cloak)"/>
+<rect x="7" y="76" width="8" height="10" rx="3" fill="#2a2a3a"/>
+<path d="M7 78 L15 78" stroke="#fde68a" stroke-width="1" opacity="0.7"/>
+<path d="M7 83 L15 83" stroke="#fde68a" stroke-width="1" opacity="0.7"/>
+<rect x="61" y="76" width="8" height="10" rx="3" fill="#2a2a3a"/>
+<path d="M61 78 L69 78" stroke="#fde68a" stroke-width="1" opacity="0.7"/>
+<path d="M61 83 L69 83" stroke="#fde68a" stroke-width="1" opacity="0.7"/>
+<!-- Spear -->
+<line x1="68" y1="20" x2="68" y2="118" stroke="#5a3a18" stroke-width="2.5" stroke-linecap="round"/>
+<path d="M64 20 L68 6 L72 20 L70 18 L68 14 L66 18Z" fill="#c0c8d8"/>
+<path d="M65 21 L71 21" stroke="#fde68a" stroke-width="1.5"/>
+<!-- Neck -->
+<rect x="31" y="40" width="14" height="10" rx="3" fill="url(#v1skin)"/>
+<!-- White beard -->
+<path d="M26 46 Q22 55 23 68 Q27 65 28 55 Q30 48 32 46Z" fill="#d0d0d8" opacity="0.9"/>
+<path d="M50 46 Q54 55 53 68 Q49 65 48 55 Q46 48 44 46Z" fill="#d0d0d8" opacity="0.9"/>
+<path d="M28 55 Q32 68 38 72 Q44 68 48 55 Q44 62 38 64 Q32 62 28 55Z" fill="#d8d8e0" opacity="0.85"/>
+<!-- Head -->
+<ellipse cx="38" cy="28" rx="16" ry="16" fill="url(#v1skin)"/>
+<!-- Winged helmet -->
+<path d="M22 26 Q22 10 38 8 Q54 10 54 26 Q50 22 38 21 Q26 22 22 26Z" fill="#2a2a3a"/>
+<path d="M22 26 Q38 24 54 26" stroke="#fde68a" stroke-width="1.5" opacity="0.7"/>
+<path d="M22 18 Q10 12 4 16 Q8 20 14 20 Q18 22 22 22Z" fill="#1a2a1a"/>
+<path d="M54 18 Q66 12 72 16 Q68 20 62 20 Q58 22 54 22Z" fill="#1a2a1a"/>
+<rect x="35" y="22" width="6" height="16" rx="2" fill="#1e1e2e" opacity="0.8"/>
+<!-- Eye patch left + glowing eye right -->
+<rect x="23" y="26" width="10" height="8" rx="3" fill="#0a0010" opacity="0.9"/>
+<ellipse cx="46" cy="30" rx="5" ry="5" fill="#0a0010"/>
+<ellipse cx="46" cy="30" rx="3.5" ry="3.5" fill="#9333ea"/>
+<ellipse cx="46" cy="30" rx="2" ry="2" fill="#c084fc"/>
+<circle cx="44" cy="28" r="1.2" fill="white" opacity="0.8"/>
+<path d="M40 25 Q44 23 50 24" stroke="#4a3010" stroke-width="1.5" fill="none"/>
+<!-- Ravens -->
+<path d="M8 52 Q4 46 6 42 Q10 44 12 48 Q14 50 10 52Z" fill="#0a0a14"/>
+<path d="M6 42 Q4 38 6 36 Q8 38 9 42Z" fill="#0a0a14"/>
+<circle cx="5" cy="41" r="1" fill="#c084fc"/>
+<path d="M68 52 Q72 46 70 42 Q66 44 64 48 Q62 50 66 52Z" fill="#0a0a14"/>
+<path d="M70 42 Q72 38 70 36 Q68 38 67 42Z" fill="#0a0a14"/>
+<circle cx="71" cy="41" r="1" fill="#c084fc"/>
+</svg>
+
+<!-- WARRIOR 2: Thor — hammer raised, red beard, lightning -->
+
+<svg class="girl-wrap" viewBox="0 0 76 118" fill="none">
+<defs>
+<linearGradient id="v2skin" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#d89868"/><stop offset="100%" stop-color="#b87848"/></linearGradient>
+<linearGradient id="v2armor" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1e3050"/><stop offset="100%" stop-color="#0e1828"/></linearGradient>
+<linearGradient id="v2chain" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3a4050"/><stop offset="100%" stop-color="#2a2e38"/></linearGradient>
+<linearGradient id="v2gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fde68a"/><stop offset="100%" stop-color="#d97706"/></linearGradient>
+</defs>
+<!-- Chainmail -->
+<path d="M10 58 Q4 68 2 84 Q0 98 2 118 L24 118 Q22 98 22 82 Q23 68 38 63 Q53 68 54 82 Q54 98 52 118 L74 118 Q76 98 74 84 Q72 68 66 58 Q56 50 38 48 Q20 50 10 58Z" fill="url(#v2chain)"/>
+<path d="M10 68 Q38 72 66 68" stroke="#4a5060" stroke-width="0.8" opacity="0.5"/>
+<path d="M8 78 Q38 82 68 78" stroke="#4a5060" stroke-width="0.8" opacity="0.5"/>
+<path d="M8 88 Q38 92 68 88" stroke="#4a5060" stroke-width="0.8" opacity="0.5"/>
+<!-- Chest plate -->
+<path d="M20 58 Q38 53 56 58 L58 84 Q38 88 18 84Z" fill="url(#v2armor)"/>
+<circle cx="24" cy="64" r="2" fill="#3a4878" opacity="0.8"/>
+<circle cx="38" cy="62" r="2" fill="#3a4878" opacity="0.8"/>
+<circle cx="52" cy="64" r="2" fill="#3a4878" opacity="0.8"/>
+<circle cx="26" cy="76" r="2" fill="#3a4878" opacity="0.8"/>
+<circle cx="50" cy="76" r="2" fill="#3a4878" opacity="0.8"/>
+<path d="M40 64 L36 73 L40 71 L36 80" stroke="#ff2d9b" stroke-width="1.5" stroke-linecap="round"/>
+<!-- Pauldrons -->
+<path d="M10 58 Q4 52 6 46 Q14 50 18 58Z" fill="url(#v2armor)"/>
+<path d="M66 58 Q72 52 70 46 Q62 50 58 58Z" fill="url(#v2armor)"/>
+<path d="M6 46 Q10 50 14 54" stroke="#fde68a" stroke-width="1" opacity="0.6"/>
+<path d="M70 46 Q66 50 62 54" stroke="#fde68a" stroke-width="1" opacity="0.6"/>
+<rect x="18" y="82" width="40" height="6" rx="3" fill="#2a1808"/>
+<rect x="34" y="81" width="8" height="8" rx="2" fill="#fde68a"/>
+<!-- Arms -->
+<path d="M10 59 Q1 67 0 82 Q5 74 9 68 Q10 63 10 59Z" fill="url(#v2skin)"/>
+<path d="M66 59 Q75 67 76 82 Q71 74 67 68 Q66 63 66 59Z" fill="url(#v2skin)"/>
+<!-- MJOLNIR -->
+<line x1="10" y1="82" x2="4" y2="42" stroke="#5a3a18" stroke-width="3" stroke-linecap="round"/>
+<rect x="-2" y="30" width="18" height="14" rx="2" fill="#5a6070"/>
+<rect x="-2" y="30" width="18" height="14" rx="2" stroke="#fde68a" stroke-width="1" fill="none" opacity="0.6"/>
+<text x="7" y="41" text-anchor="middle" font-size="8" fill="#fde68a" opacity="0.9" font-family="serif">ᚦ</text>
+<!-- Neck -->
+<rect x="31" y="42" width="16" height="12" rx="3" fill="url(#v2skin)"/>
+<!-- Red beard -->
+<path d="M24 48 Q18 58 20 72 Q25 68 26 58 Q28 50 30 48Z" fill="#9a2808"/>
+<path d="M52 48 Q58 58 56 72 Q51 68 50 58 Q48 50 46 48Z" fill="#9a2808"/>
+<path d="M26 57 Q30 70 38 75 Q46 70 50 57 Q45 64 38 66 Q31 64 26 57Z" fill="#b03010"/>
+<!-- Head -->
+<ellipse cx="38" cy="28" rx="17" ry="17" fill="url(#v2skin)"/>
+<!-- Helmet -->
+<path d="M21 26 Q21 8 38 6 Q55 8 55 26 Q51 20 38 19 Q25 20 21 26Z" fill="#1e2a40"/>
+<path d="M21 26 Q38 22 55 26" stroke="#fde68a" stroke-width="2" opacity="0.7"/>
+<path d="M21 26 Q18 32 20 40 Q24 36 25 28Z" fill="#1a2438"/>
+<path d="M55 26 Q58 32 56 40 Q52 36 51 28Z" fill="#1a2438"/>
+<rect x="35" y="20" width="6" height="18" rx="3" fill="#16202e"/>
+<!-- Eyes blue fierce -->
+<ellipse cx="28" cy="28" rx="5.5" ry="5" fill="#080810"/>
+<ellipse cx="28" cy="28" rx="4" ry="3.8" fill="#1e60c0"/>
+<ellipse cx="28" cy="28" rx="2.2" ry="2" fill="#3a90e0"/>
+<circle cx="26" cy="26" r="1.5" fill="white" opacity="0.8"/>
+<ellipse cx="48" cy="28" rx="5.5" ry="5" fill="#080810"/>
+<ellipse cx="48" cy="28" rx="4" ry="3.8" fill="#1e60c0"/>
+<ellipse cx="48" cy="28" rx="2.2" ry="2" fill="#3a90e0"/>
+<circle cx="46" cy="26" r="1.5" fill="white" opacity="0.8"/>
+<path d="M23 23 Q26 21 30 22" stroke="#4a2808" stroke-width="2" fill="none"/>
+<path d="M46 22 Q50 21 53 23" stroke="#4a2808" stroke-width="2" fill="none"/>
+<!-- Lightning -->
+<path d="M62 20 L58 30 L62 28 L58 38" stroke="#ff2d9b" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>
+</svg>
+
+<!-- WARRIOR 3: Shield Maiden Valkyrie — winged helm, sword, shield, blonde hair -->
+
+<svg class="girl-wrap" viewBox="0 0 76 118" fill="none">
+<defs>
+<linearGradient id="v3skin" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f0d0b0"/><stop offset="100%" stop-color="#d8a880"/></linearGradient>
+<linearGradient id="v3armor" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3a2050"/><stop offset="100%" stop-color="#20103a"/></linearGradient>
+<linearGradient id="v3shield" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1a0a2e"/><stop offset="100%" stop-color="#400060"/></linearGradient>
+<linearGradient id="v3gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fde68a"/><stop offset="100%" stop-color="#f59e0b"/></linearGradient>
+<linearGradient id="v3hair" x1="0" y1="0" x2="0.2" y2="1"><stop offset="0%" stop-color="#f8e8c0"/><stop offset="100%" stop-color="#e0c080"/></linearGradient>
+</defs>
+<!-- Blonde hair flowing -->
+<path d="M14 34 Q4 50 2 72 Q0 90 4 118 Q10 92 12 68 Q14 50 18 38Z" fill="url(#v3hair)" opacity="0.9"/>
+<path d="M62 34 Q72 50 74 72 Q76 90 72 118 Q66 92 64 68 Q62 50 58 38Z" fill="url(#v3hair)" opacity="0.85"/>
+<!-- Armor -->
+<path d="M18 56 Q10 65 8 80 Q6 94 7 110 L26 110 Q25 90 25 76 Q26 65 38 61 Q50 65 51 76 Q51 90 50 110 L69 110 Q70 94 68 80 Q66 65 58 56 Q50 50 38 49 Q26 50 18 56Z" fill="url(#v3armor)"/>
+<path d="M22 56 Q38 51 54 56 L54 78 Q38 82 22 78Z" fill="#2a1540"/>
+<path d="M22 63 Q38 67 54 63" stroke="#4a2870" stroke-width="1.2" fill="none"/>
+<path d="M22 71 Q38 75 54 71" stroke="#4a2870" stroke-width="1.2" fill="none"/>
+<ellipse cx="38" cy="62" rx="4" ry="3" fill="#9333ea"/>
+<ellipse cx="38" cy="62" rx="2.5" ry="2" fill="#c084fc"/>
+<circle cx="37" cy="61" r="1" fill="white" opacity="0.6"/>
+<path d="M22 56 Q38 52 54 56" stroke="#fde68a" stroke-width="1.5" opacity="0.7"/>
+<!-- Shoulder guards -->
+<path d="M18 56 Q10 50 12 43 Q18 47 22 55Z" fill="#2a1540"/>
+<path d="M58 56 Q66 50 64 43 Q58 47 54 55Z" fill="#2a1540"/>
+<path d="M12 43 L18 52" stroke="#fde68a" stroke-width="1.2" opacity="0.6"/>
+<path d="M64 43 L58 52" stroke="#fde68a" stroke-width="1.2" opacity="0.6"/>
+<rect x="20" y="77" width="36" height="5" rx="2.5" fill="#1a0a10"/>
+<rect x="33" y="76" width="10" height="7" rx="2" fill="#fde68a"/>
+<path d="M20 100 Q18 108 16 118 Q22 112 24 104 L27 118 L38 104 L49 118 L52 104 Q54 112 60 118 Q58 108 56 100Z" fill="#1a0a2e"/>
+<!-- Arms -->
+<path d="M18 57 Q8 65 6 80 Q10 73 14 66 Q16 61 18 57Z" fill="url(#v3skin)"/>
+<path d="M58 57 Q68 65 70 80 Q66 73 62 66 Q60 61 58 57Z" fill="url(#v3skin)"/>
+<!-- SHIELD -->
+<circle cx="5" cy="75" r="12" fill="url(#v3shield)"/>
+<circle cx="5" cy="75" r="10" stroke="#fde68a" stroke-width="1.5" fill="none" opacity="0.7"/>
+<line x1="5" y1="63" x2="5" y2="87" stroke="#fde68a" stroke-width="1" opacity="0.5"/>
+<line x1="-7" y1="75" x2="17" y2="75" stroke="#fde68a" stroke-width="1" opacity="0.5"/>
+<circle cx="5" cy="75" r="3" fill="#fde68a" opacity="0.9"/>
+<text x="5" y="71" text-anchor="middle" font-size="7" fill="#fde68a" opacity="0.6" font-family="serif">ᚹ</text>
+<!-- SWORD -->
+<line x1="68" y1="80" x2="76" y2="30" stroke="#8a9ab0" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="63" y1="60" x2="73" y2="55" stroke="#8a9ab0" stroke-width="3" stroke-linecap="round"/>
+<path d="M71 34 L76 28 L77 30 L72 36Z" fill="#c8d0e0"/>
+<line x1="68" y1="80" x2="76" y2="30" stroke="#c084fc" stroke-width="0.8" opacity="0.4"/>
+<!-- Neck -->
+<rect x="31" y="41" width="14" height="11" rx="3" fill="url(#v3skin)"/>
+<!-- Head -->
+<ellipse cx="38" cy="27" rx="16" ry="17" fill="url(#v3skin)"/>
+<!-- Winged helmet -->
+<path d="M22 24 Q22 8 38 6 Q54 8 54 24 Q50 19 38 18 Q26 19 22 24Z" fill="#2a2a3a"/>
+<path d="M22 24 Q38 21 54 24" stroke="#fde68a" stroke-width="1.5" opacity="0.7"/>
+<!-- Big wings -->
+<path d="M22 18 Q8 8 2 12 Q6 18 12 18 Q16 20 20 20Z" fill="#e8eaf0"/>
+<path d="M22 16 Q10 6 4 10" stroke="#c0c8d8" stroke-width="0.8" opacity="0.6"/>
+<path d="M54 18 Q68 8 74 12 Q70 18 64 18 Q60 20 56 20Z" fill="#e8eaf0"/>
+<path d="M54 16 Q66 6 72 10" stroke="#c0c8d8" stroke-width="0.8" opacity="0.6"/>
+<rect x="35" y="18" width="6" height="14" rx="2" fill="#1e1e2e" opacity="0.6"/>
+<!-- Eyes violet -->
+<ellipse cx="28" cy="26" rx="5.5" ry="5.5" fill="#080010"/>
+<ellipse cx="28" cy="26" rx="4" ry="4" fill="#7c3aed"/>
+<ellipse cx="28" cy="26.5" rx="2.2" ry="2.2" fill="#c084fc"/>
+<circle cx="26" cy="24" r="1.5" fill="white" opacity="0.85"/>
+<ellipse cx="48" cy="26" rx="5.5" ry="5.5" fill="#080010"/>
+<ellipse cx="48" cy="26" rx="4" ry="4" fill="#7c3aed"/>
+<ellipse cx="48" cy="26.5" rx="2.2" ry="2.2" fill="#c084fc"/>
+<circle cx="46" cy="24" r="1.5" fill="white" opacity="0.85"/>
+<path d="M22 21 Q26 19 30 20" stroke="#3a2808" stroke-width="1.5" fill="none"/>
+<path d="M46 20 Q50 19 54 21" stroke="#3a2808" stroke-width="1.5" fill="none"/>
+<path d="M32 33 Q38 36 44 33" stroke="#c07070" stroke-width="1" fill="none" stroke-linecap="round"/>
+<ellipse cx="24" cy="30" rx="5" ry="2.5" fill="#ffb0b0" opacity="0.25"/>
+<ellipse cx="52" cy="30" rx="5" ry="2.5" fill="#ffb0b0" opacity="0.25"/>
+</svg>
+
+</div>
+
+<!-- NAVIGATION - 3 tabs -->
+
+<div class="nav-tabs">
+<button class="nav-tab active" onclick="showPage('tracker',this)">⚔ Tracker</button>
+<button class="nav-tab" onclick="showPage('checkup',this)">✅ Checkup</button>
+<button class="nav-tab" onclick="showPage('trophies',this)">🏆 Trophées</button>
+</div>
+
+<!-- PAGE TRACKER -->
+
+<div class="page active" id="page-tracker">
 <div class="tabs">
-  <button class="tab active" onclick="filterTab('tout',this)">Tout</button>
-  <button class="tab" onclick="filterTab('cardio',this)">Cardio</button>
-  <button class="tab" onclick="filterTab('distance',this)">Distance</button>
-  <button class="tab" onclick="filterTab('calories',this)">Calories</button>
-  <button class="tab" onclick="filterTab('muscu',this)">Muscu</button>
+<button class="tab active" onclick="filterTab('tout',this)">Tout</button>
+<button class="tab" onclick="filterTab('cardio',this)">Cardio</button>
+<button class="tab" onclick="filterTab('distance',this)">Distance</button>
+<button class="tab" onclick="filterTab('calories',this)">Calories</button>
+<button class="tab" onclick="filterTab('muscu',this)">Muscu</button>
 </div>
 <div class="cards">
-  <div class="card purple"><div class="card-icon">❤️</div><div><span class="card-value" id="avg-bpm">--</span> <span class="card-unit">bpm</span></div><div class="card-label">Fréquence moy.</div></div>
-  <div class="card teal"><div class="card-icon">📍</div><div><span class="card-value" id="total-km">--</span> <span class="card-unit">km</span></div><div class="card-label">Distance totale</div></div>
-  <div class="card coral"><div class="card-icon">🔥</div><div><span class="card-value" id="total-cal">--</span> <span class="card-unit">kcal</span></div><div class="card-label">Calories totales</div></div>
-  <div class="card blue"><div class="card-icon">💪</div><div><span class="card-value" id="total-series">--</span> <span class="card-unit">séances</span></div><div class="card-label">Muscu ce mois</div></div>
+<div class="card c1"><span class="card-glyph">🩸</span><div><span class="card-value" id="avg-bpm">--</span> <span class="card-unit">bpm</span></div><div class="card-label">Fréquence moy.</div></div>
+<div class="card c2"><span class="card-glyph">⚡</span><div><span class="card-value" id="total-km">--</span> <span class="card-unit">km</span></div><div class="card-label">Distance totale</div></div>
+<div class="card c3"><span class="card-glyph">🔥</span><div><span class="card-value" id="total-cal">--</span> <span class="card-unit">kcal</span></div><div class="card-label">Calories totales</div></div>
+<div class="card c4"><span class="card-glyph">⚔️</span><div><span class="card-value" id="total-series">--</span> <span class="card-unit">séances</span></div><div class="card-label">Muscu ce mois</div></div>
 </div>
+<div class="rune-divider"><div class="rune-line"></div><div class="rune-symbol">✦ ᚦ ✦</div><div class="rune-line"></div></div>
 <div class="section">
-  <div class="section-title">Calories cette semaine</div>
-  <div class="chart-wrap"><canvas id="myChart" height="120"></canvas></div>
+<div class="section-title">⚡ Calories cette semaine</div>
+<div class="chart-wrap"><canvas id="myChart" height="100"></canvas></div>
 </div>
-<button class="add-btn" onclick="openModal()">+ Ajouter une séance</button>
+<button class="add-btn" onclick="openModal()">⚔ Ajouter une séance ⚔</button>
 <div class="section">
-  <div class="section-title">Séances récentes</div>
-  <div id="entries-list"></div>
+<div class="section-title">🩸 Séances récentes</div>
+<div id="entries-list"></div>
 </div>
+</div>
+
+<!-- PAGE CHECKUP -->
+
+<div class="page" id="page-checkup">
+<div class="checkup-header">
+<div class="checkup-date" id="checkup-date"></div>
+<div class="checkup-title">✦ Check-Up Quotidien ✦</div>
+</div>
+<div class="checkup-progress">
+<div class="cp-bar"><div class="cp-fill" id="cp-fill" style="width:0%"></div></div>
+</div>
+<div class="cp-text" id="cp-text" style="color:var(--text-muted)">0 / 3 complétés aujourd'hui</div>
+
+<div class="checkup-tasks">
+<!-- Task 1: Training -->
+<div class="task-card task-sport" id="task-0" onclick="toggleTask(0)">
+<div class="task-icon-wrap">💪</div>
+<div class="task-content">
+<div class="task-name">Séance d'entraînement</div>
+<div class="task-desc">N'importe quelle activité physique du jour</div>
+</div>
+<div class="task-check" id="check-0"></div>
+</div>
+<!-- Task 2: Water -->
+<div class="task-card task-water" id="task-1" onclick="toggleTask(1)">
+<div class="task-icon-wrap">💧</div>
+<div class="task-content">
+<div class="task-name">Boire 3L d'eau</div>
+<div class="task-desc">Hydratation optimale pour la performance</div>
+</div>
+<div class="task-check" id="check-1"></div>
+</div>
+<!-- Task 3: Supplements -->
+<div class="task-card task-supps" id="task-2" onclick="toggleTask(2)">
+<div class="task-icon-wrap">⚗️</div>
+<div class="task-content">
+<div class="task-name">Créatine & Protein Shake</div>
+<div class="task-desc">Suppléments quotidiens post-entraînement</div>
+</div>
+<div class="task-check" id="check-2"></div>
+</div>
+</div>
+
+<!-- Streak block -->
+
+<div class="checkup-streak">
+<span class="streak-icon">🔥</span>
+<div class="streak-text">
+<div class="streak-num" id="daily-streak">0</div>
+<div class="streak-label">Jours complets de suite</div>
+</div>
+<button class="checkup-reset" onclick="if(confirm('Réinitialiser aujourd\'hui ?')) resetDay()">Reset</button>
+</div>
+
+<!-- Weekly overview -->
+
+<div class="section" style="margin-top:4px">
+<div class="section-title">📅 Cette semaine</div>
+<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;background:var(--dark2);border-radius:14px;padding:12px;border:1px solid rgba(147,51,234,0.12)">
+<div id="week-0" style="text-align:center"></div>
+<div id="week-1" style="text-align:center"></div>
+<div id="week-2" style="text-align:center"></div>
+<div id="week-3" style="text-align:center"></div>
+<div id="week-4" style="text-align:center"></div>
+<div id="week-5" style="text-align:center"></div>
+<div id="week-6" style="text-align:center"></div>
+</div>
+</div>
+</div>
+
+<!-- PAGE TROPHÉES -->
+
+<div class="page" id="page-trophies">
+<div class="trophy-header">
+<div class="trophy-header-title">✦ Hall of Glory ✦</div>
+<div class="trophy-subtitle" id="trophy-subtitle">Accomplis des séances pour débloquer</div>
+</div>
+<div class="trophy-count-bar"><div class="trophy-count-fill" id="trophy-fill" style="width:0%"></div></div>
+<div class="trophy-count-text" id="trophy-count-text">0 / 30 trophées</div>
+<div class="trophies-grid" id="trophies-grid"></div>
+</div>
+
+<!-- MODAL -->
+
 <div class="modal" id="modal">
-  <div class="modal-box">
-    <div class="modal-title">Nouvelle séance</div>
-    <div class="form-group">
-      <label>Type de sport</label>
-      <select id="f-type">
-        <option>Course à pied</option>
-        <option>Vélo</option>
-        <option>Natation</option>
-        <option>Musculation</option>
-        <option>Marche</option>
-        <option>Autre</option>
-      </select>
-    </div>
-    <div class="form-row">
-      <div class="form-group"><label>Durée (min)</label><input type="number" id="f-duree" placeholder="45"></div>
-      <div class="form-group"><label>Calories (kcal)</label><input type="number" id="f-cal" placeholder="400"></div>
-    </div>
-    <div class="form-row">
-      <div class="form-group"><label>Fréquence (bpm)</label><input type="number" id="f-bpm" placeholder="140"></div>
-      <div class="form-group"><label>Distance (km)</label><input type="number" id="f-km" placeholder="5.0" step="0.1"></div>
-    </div>
-    <div class="form-group"><label>Date</label><input type="date" id="f-date"></div>
-    <div class="btn-row">
-      <button class="btn-cancel" onclick="closeModal()">Annuler</button>
-      <button class="btn-save" onclick="saveEntry()">Enregistrer</button>
-    </div>
-  </div>
+<div class="modal-box">
+<div class="modal-title">⚔ Nouvelle Séance ⚔</div>
+<div class="form-group"><label>Type de sport</label><select id="f-type"><option>Course à pied</option><option>Vélo</option><option>Natation</option><option>Musculation</option><option>Marche</option><option>Escalade</option><option>Randonnée</option><option>Yoga</option><option>Boxe</option><option>Autre</option></select></div>
+<div class="form-row"><div class="form-group"><label>Durée (min)</label><input type="number" id="f-duree" placeholder="45"></div><div class="form-group"><label>Calories (kcal)</label><input type="number" id="f-cal" placeholder="400"></div></div>
+<div class="form-row"><div class="form-group"><label>Fréquence (bpm)</label><input type="number" id="f-bpm" placeholder="140"></div><div class="form-group"><label>Distance (km)</label><input type="number" id="f-km" placeholder="5.0" step="0.1"></div></div>
+<div class="form-group"><label>Date</label><input type="date" id="f-date"></div>
+<div class="btn-row"><button class="btn-cancel" onclick="closeModal()">Annuler</button><button class="btn-save" onclick="saveEntry()">Enregistrer</button></div>
 </div>
+</div>
+
 <script>
-let entries=JSON.parse(localStorage.getItem('sport-entries')||'[]');
-let currentFilter='tout';
-let chart;
-const days=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
-const months=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
-function init(){
-  const d=new Date();
-  document.getElementById('date-display').textContent=days[d.getDay()]+' '+d.getDate()+' '+months[d.getMonth()]+' '+d.getFullYear();
-  document.getElementById('f-date').value=d.toISOString().split('T')[0];
-  buildChart();
-  renderEntries();
-  updateStats();
+// ===== STATE =====
+let entries = JSON.parse(localStorage.getItem('sport-entries') || '[]');
+let newlyUnlocked = [];
+let chart, currentFilter = 'tout';
+const days = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+const months = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+const today = () => new Date().toISOString().split('T')[0];
+
+// ===== DAILY CHECKUP =====
+function getCheckData() { return JSON.parse(localStorage.getItem('daily-check') || '{}'); }
+function saveCheckData(d) { localStorage.setItem('daily-check', JSON.stringify(d)); }
+
+function toggleTask(i) {
+const data = getCheckData();
+const td = today();
+if (!data[td]) data[td] = [false, false, false];
+data[td][i] = !data[td][i];
+saveCheckData(data);
+renderCheckup();
+checkDailyComplete(data);
 }
-function buildChart(){
-  const ctx=document.getElementById('myChart').getContext('2d');
-  const labels=[];const data=[];
-  for(let i=6;i>=0;i--){
-    const d=new Date();d.setDate(d.getDate()-i);
-    labels.push(days[d.getDay()]);
-    const ds=d.toISOString().split('T')[0];
-    const total=entries.filter(e=>e.date===ds).reduce((s,e)=>s+(e.cal||0),0);
-    data.push(total);
-  }
-  if(chart)chart.destroy();
-  chart=new Chart(ctx,{type:'bar',data:{labels,datasets:[{data,backgroundColor:data.map(v=>v>0?'#7F77DD':'#2a2a4a'),borderRadius:6,borderSkipped:false}]},options:{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#666',font:{size:11}},grid:{display:false}},y:{ticks:{color:'#666',font:{size:11}},grid:{color:'#1e1e35'}}}}});
+
+function resetDay() {
+const data = getCheckData();
+data[today()] = [false, false, false];
+saveCheckData(data);
+renderCheckup();
 }
-function updateStats(){
-  const now=new Date();
-  const month=now.toISOString().slice(0,7);
-  const filtered=currentFilter==='tout'?entries:entries.filter(e=>getCategory(e.type)===currentFilter);
-  const bpms=filtered.filter(e=>e.bpm);
-  document.getElementById('avg-bpm').textContent=bpms.length?Math.round(bpms.reduce((s,e)=>s+e.bpm,0)/bpms.length):'--';
-  const km=filtered.reduce((s,e)=>s+(e.km||0),0);
-  document.getElementById('total-km').textContent=km?km.toFixed(1):'--';
-  const cal=filtered.reduce((s,e)=>s+(e.cal||0),0);
-  document.getElementById('total-cal').textContent=cal||'--';
-  const muscu=entries.filter(e=>e.type==='Musculation'&&e.date.startsWith(month)).length;
-  document.getElementById('total-series').textContent=muscu||'--';
+
+function checkDailyComplete(data) {
+const td = today();
+const arr = data[td] || [false,false,false];
+if (arr.every(Boolean)) {
+showToast({icon:'🌟', name:'Journée Parfaite !'});
 }
-function getCategory(type){
-  if(['Course à pied','Vélo','Natation','Marche'].includes(type))return'distance';
-  if(type==='Musculation')return'muscu';
-  return'cardio';
 }
-function renderEntries(){
-  const list=document.getElementById('entries-list');
-  const filtered=currentFilter==='tout'?entries:entries.filter(e=>getCategory(e.type)===currentFilter);
-  const sorted=[...filtered].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,20);
-  if(!sorted.length){list.innerHTML='<div class="empty">Aucune séance enregistrée</div>';return;}
-  list.innerHTML=sorted.map((e,i)=>`<div class="entry"><div class="entry-left"><span class="entry-name">${e.type}</span><span class="entry-meta">${e.date} · ${e.duree} min${e.km?' · '+e.km+'km':''}</span></div><div class="entry-cal">${e.cal?e.cal+' kcal':e.bpm?e.bpm+' bpm':''}</div></div>`).join('');
+
+function getDailyStreak(data) {
+let streak = 0, d = new Date();
+for (let i = 0; i < 365; i++) {
+const ds = d.toISOString().split('T')[0];
+const arr = data[ds] || [];
+if (arr.every(Boolean) && arr.length === 3) streak++;
+else if (streak > 0) break;
+d.setDate(d.getDate() - 1);
 }
-function filterTab(f,btn){
-  currentFilter=f;
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  btn.classList.add('active');
-  renderEntries();updateStats();
+return streak;
 }
-function openModal(){document.getElementById('modal').classList.add('open');}
-function closeModal(){document.getElementById('modal').classList.remove('open');}
-function saveEntry(){
-  const entry={type:document.getElementById('f-type').value,duree:parseInt(document.getElementById('f-duree').value)||0,cal:parseInt(document.getElementById('f-cal').value)||0,bpm:parseInt(document.getElementById('f-bpm').value)||0,km:parseFloat(document.getElementById('f-km').value)||0,date:document.getElementById('f-date').value};
-  entries.unshift(entry);
-  localStorage.setItem('sport-entries',JSON.stringify(entries));
-  closeModal();buildChart();renderEntries();updateStats();
+
+function renderCheckup() {
+const data = getCheckData();
+const td = today();
+const arr = data[td] || [false, false, false];
+const count = arr.filter(Boolean).length;
+
+// Date display
+const now = new Date();
+document.getElementById('checkup-date').textContent = days[now.getDay()] + ' ' + now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear();
+
+// Progress
+document.getElementById('cp-fill').style.width = (count / 3 * 100) + '%';
+const cpText = document.getElementById('cp-text');
+cpText.textContent = count + ' / 3 complétés aujourd\'hui';
+cpText.style.color = count === 3 ? 'var(--green-check)' : count > 0 ? 'var(--gold)' : 'var(--text-muted)';
+
+// Tasks
+[0,1,2].forEach(i => {
+const card = document.getElementById('task-' + i);
+const chk = document.getElementById('check-' + i);
+if (arr[i]) {
+card.classList.add('done');
+chk.textContent = '✅';
+} else {
+card.classList.remove('done');
+chk.textContent = '';
 }
+});
+
+// Streak
+document.getElementById('daily-streak').textContent = getDailyStreak(data);
+
+// Weekly view
+for (let i = 6; i >= 0; i--) {
+const d = new Date(); d.setDate(d.getDate() - i);
+const ds = d.toISOString().split('T')[0];
+const dayArr = data[ds] || [];
+const done = dayArr.every(Boolean) && dayArr.length === 3;
+const partial = dayArr.some(Boolean);
+const idx = 6 - i;
+const el = document.getElementById('week-' + idx);
+if (el) {
+el.innerHTML = `<div style="font-size:9px;color:var(--text-muted);margin-bottom:3px">${days[d.getDay()]}</div><div style="font-size:18px">${done ? '⭐' : partial ? '🔸' : '⬜'}</div>`;
+}
+}
+}
+
+// ===== TROPHIES =====
+const TROPHIES = [
+{id:'first',icon:'🌱',name:'Première Étincelle',desc:'Ta toute 1ère séance !',rarity:'common',check:e=>e.length>=1},
+{id:'warrior',icon:'🗡️',name:'Apprenti Guerrier',desc:'5 séances au total',rarity:'common',check:e=>e.length>=5},
+{id:'the_rock',icon:'🪨',name:'The Rock !',desc:'Muscu 45 min ou plus',rarity:'common',check:e=>e.some(x=>x.type==='Musculation'&&x.duree>=45)},
+{id:'yoga_zen',icon:'🧘',name:'Esprit Zen',desc:'5 séances de yoga',rarity:'common',check:e=>e.filter(x=>x.type==='Yoga').length>=5},
+{id:'hercule',icon:'💪',name:'Hercule',desc:'5 jours consécutifs',rarity:'epic',check:e=>getStreak(e)>=5},
+{id:'zeus',icon:'⚡',name:'Zeus',desc:'7 jours consécutifs',rarity:'legendary',check:e=>getStreak(e)>=7},
+{id:'zeus_km',icon:'🏃',name:'Zeus du Sprint',desc:'1 km/jour - 7 jours',rarity:'rare',check:e=>{for(let i=0;i<7;i++){const d=new Date();d.setDate(d.getDate()-i);if(!e.filter(x=>x.date===d.toISOString().split('T')[0]).some(x=>(x.km||0)>=1))return false;}return e.length>0;}},
+{id:'apollo',icon:'☀️',name:'Apollon',desc:'10 séances de course',rarity:'rare',check:e=>e.filter(x=>x.type==='Course à pied').length>=10},
+{id:'ares',icon:'🗡️',name:'Arès',desc:'20 séances de muscu',rarity:'legendary',check:e=>e.filter(x=>x.type==='Musculation').length>=20},
+{id:'poseidon',icon:'🔱',name:'Poséidon',desc:'5 séances de natation',rarity:'rare',check:e=>e.filter(x=>x.type==='Natation').length>=5},
+{id:'athena',icon:'🦉',name:'Athéna',desc:'30 séances au total',rarity:'epic',check:e=>e.length>=30},
+{id:'hades',icon:'💀',name:'Hadès',desc:'5000 kcal totales',rarity:'epic',check:e=>e.reduce((s,x)=>s+(x.cal||0),0)>=5000},
+{id:'hermes',icon:'🪶',name:'Hermès',desc:'100 km parcourus',rarity:'legendary',check:e=>e.reduce((s,x)=>s+(x.km||0),0)>=100},
+{id:'titan',icon:'🌋',name:'Titan',desc:'Séance de 2h ou plus',rarity:'epic',check:e=>e.some(x=>x.duree>=120)},
+{id:'odin',icon:'🐦‍⬛',name:'Odin',desc:'50 séances totales',rarity:'legendary',check:e=>e.length>=50},
+{id:'thor',icon:'🔨',name:'Thor',desc:'10 muscu en un mois',rarity:'epic',check:e=>{const m=new Date().toISOString().slice(0,7);return e.filter(x=>x.type==='Musculation'&&x.date.startsWith(m)).length>=10;}},
+{id:'valkyrie',icon:'⚔️',name:'Valkyrie',desc:'3 séances en un jour',rarity:'rare',check:e=>{const c={};e.forEach(x=>{c[x.date]=(c[x.date]||0)+1;});return Object.values(c).some(v=>v>=3);}},
+{id:'berserker',icon:'🐺',name:'Berserker',desc:'Fréquence à 200 bpm',rarity:'epic',check:e=>e.some(x=>x.bpm>=200)},
+{id:'valhalla',icon:'🏰',name:'Valhalla',desc:'1000 km au total',rarity:'legendary',check:e=>e.reduce((s,x)=>s+(x.km||0),0)>=1000},
+{id:'ragnarok',icon:'🌩️',name:'Ragnarök',desc:'20 000 kcal totales',rarity:'legendary',check:e=>e.reduce((s,x)=>s+(x.cal||0),0)>=20000},
+{id:'skald',icon:'📜',name:'Skald',desc:'6 types de sports',rarity:'rare',check:e=>new Set(e.map(x=>x.type)).size>=6},
+{id:'sorcier',icon:'🔮',name:'Super Sorcier',desc:'7 types de sports',rarity:'epic',check:e=>new Set(e.map(x=>x.type)).size>=7},
+{id:'arcane',icon:'✨',name:'Arcane Suprême',desc:'100 séances totales',rarity:'legendary',check:e=>e.length>=100},
+{id:'wizard',icon:'🧙',name:'Grand Mage',desc:'50 000 kcal totales',rarity:'legendary',check:e=>e.reduce((s,x)=>s+(x.cal||0),0)>=50000},
+{id:'rune',icon:'ᚱ',name:'Maître des Runes',desc:'Tous les types de sport',rarity:'rare',check:e=>['Course à pied','Vélo','Natation','Musculation','Escalade','Yoga','Boxe'].every(t=>e.some(x=>x.type===t))},
+{id:'olympe',icon:'⛰️',name:'Sommet Olympe',desc:'Randonnée de 20 km',rarity:'epic',check:e=>e.some(x=>x.type==='Randonnée'&&x.km>=20)},
+{id:'atlas',icon:'🌍',name:'Atlas',desc:'500 km parcourus',rarity:'epic',check:e=>e.reduce((s,x)=>s+(x.km||0),0)>=500},
+{id:'escalade',icon:'🧗',name:'Conquérant du Ciel',desc:'5 séances d\'escalade',rarity:'rare',check:e=>e.filter(x=>x.type==='Escalade').length>=5},
+{id:'boxer',icon:'🥊',name:'Poings de Feu',desc:'5 séances de boxe',rarity:'rare',check:e=>e.filter(x=>x.type==='Boxe').length>=5},
+{id:'daily7',icon:'🌟',name:'Semaine Parfaite',desc:'7 check-ups complets de suite',rarity:'legendary',check:e=>getDailyStreak(getCheckData())>=7},
+];
+
+function getStreak(e) {
+if (!e.length) return 0;
+const dates = [...new Set(e.map(x=>x.date))].sort().reverse();
+let streak = 0, d = new Date();
+for (let i = 0; i < 365; i++) {
+const ds = d.toISOString().split('T')[0];
+if (dates.includes(ds)) streak++;
+else if (streak > 0) break;
+d.setDate(d.getDate() - 1);
+}
+return streak;
+}
+
+function renderTrophies() {
+const grid = document.getElementById('trophies-grid');
+const unlocked = TROPHIES.filter(t => t.check(entries));
+const uIds = unlocked.map(t => t.id);
+const count = unlocked.length, total = TROPHIES.length;
+document.getElementById('trophy-fill').style.width = (count/total*100) + '%';
+document.getElementById('trophy-count-text').textContent = count + ' / ' + total + ' trophées débloqués';
+document.getElementById('trophy-subtitle').textContent = count===0?'Commence à t\'entraîner !':count<5?'Tu gagnes ta légende...':count<15?'Les dieux t\'observent !':'Tu es une véritable légende !';
+grid.innerHTML = TROPHIES.map(t => {
+const u = uIds.includes(t.id), isNew = newlyUnlocked.includes(t.id);
+return `<div class="trophy-card ${u?'unlocked':'locked'}">${u?'<div class="trophy-badge">★</div>':'<div class="trophy-lock">🔒</div>'}${isNew?'<div class="trophy-new-badge">NEW</div>':''}<span class="trophy-icon">${t.icon}</span><div class="trophy-name">${t.name}</div><div class="trophy-desc">${t.desc}</div><div class="trophy-rarity rarity-${t.rarity}">${t.rarity}</div></div>`;
+}).join('');
+}
+
+function checkNewTrophies() {
+const prev = JSON.parse(localStorage.getItem('unlocked-trophies') || '[]');
+const current = TROPHIES.filter(t => t.check(entries)).map(t => t.id);
+newlyUnlocked = current.filter(id => !prev.includes(id));
+localStorage.setItem('unlocked-trophies', JSON.stringify(current));
+if (newlyUnlocked.length > 0) { const t = TROPHIES.find(x=>x.id===newlyUnlocked[0]); if(t) showToast(t); }
+}
+
+function showToast(t) {
+const old = document.querySelector('.toast'); if(old) old.remove();
+const toast = document.createElement('div'); toast.className = 'toast';
+toast.innerHTML = `<span class="toast-icon">${t.icon}</span><div class="toast-label">✦ Succès débloqué ✦</div><div class="toast-name">${t.name}</div>`;
+document.body.appendChild(toast);
+setTimeout(() => toast.remove(), 3200);
+}
+
+// ===== TRACKER =====
+function init() {
+buildChart(); renderEntries(); updateStats(); renderTrophies(); renderCheckup();
+document.getElementById('f-date').value = today();
+}
+
+function buildChart() {
+const ctx = document.getElementById('myChart').getContext('2d');
+const labels = [], data = [];
+for (let i = 6; i >= 0; i--) {
+const d = new Date(); d.setDate(d.getDate()-i);
+labels.push(days[d.getDay()]);
+const ds = d.toISOString().split('T')[0];
+data.push(entries.filter(e=>e.date===ds).reduce((s,e)=>s+(e.cal||0),0));
+}
+if (chart) chart.destroy();
+chart = new Chart(ctx, {type:'bar',data:{labels,datasets:[{data,backgroundColor:data.map((v,i)=>v>0?(i%2===0?'rgba(147,51,234,0.75)':'rgba(255,0,128,0.75)'):'rgba(255,255,255,0.05)'),borderColor:data.map((v,i)=>v>0?(i%2===0?'#9333ea':'#ff0080'):'transparent'),borderWidth:1,borderRadius:6,borderSkipped:false}]},options:{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#5a5a7a',font:{size:11,family:'Rajdhani'}},grid:{display:false},border:{display:false}},y:{ticks:{color:'#5a5a7a',font:{size:10}},grid:{color:'rgba(147,51,234,0.07)'},border:{display:false}}}}});
+}
+
+function updateStats() {
+const month = new Date().toISOString().slice(0,7);
+const f = currentFilter==='tout' ? entries : entries.filter(e=>getCat(e.type)===currentFilter);
+const bpms = f.filter(e=>e.bpm);
+document.getElementById('avg-bpm').textContent = bpms.length ? Math.round(bpms.reduce((s,e)=>s+e.bpm,0)/bpms.length) : '--';
+const km = f.reduce((s,e)=>s+(e.km||0),0);
+document.getElementById('total-km').textContent = km ? km.toFixed(1) : '--';
+document.getElementById('total-cal').textContent = f.reduce((s,e)=>s+(e.cal||0),0) || '--';
+document.getElementById('total-series').textContent = entries.filter(e=>e.type==='Musculation'&&e.date.startsWith(month)).length || '--';
+}
+
+function getCat(t) {
+if (['Course à pied','Vélo','Natation','Marche','Randonnée'].includes(t)) return 'distance';
+if (['Musculation','Boxe'].includes(t)) return 'muscu';
+return 'cardio';
+}
+
+function renderEntries() {
+const list = document.getElementById('entries-list');
+const f = currentFilter==='tout' ? entries : entries.filter(e=>getCat(e.type)===currentFilter);
+const s = [...f].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,20);
+if (!s.length) { list.innerHTML='<div class="empty">⚔ Aucune séance enregistrée ⚔</div>'; return; }
+list.innerHTML = s.map(e=>`<div class="entry"><div><div class="entry-name">${e.type}</div><div class="entry-meta">${e.date} · ${e.duree} min${e.km?' · '+e.km+' km':''}</div></div><div class="entry-cal">${e.cal?e.cal+' kcal':e.bpm?e.bpm+' bpm':''}</div></div>`).join('');
+}
+
+function filterTab(f,btn) { currentFilter=f; document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); btn.classList.add('active'); renderEntries(); updateStats(); }
+function showPage(p,btn) { document.querySelectorAll('.page').forEach(x=>x.classList.remove('active')); document.querySelectorAll('.nav-tab').forEach(x=>x.classList.remove('active')); document.getElementById('page-'+p).classList.add('active'); btn.classList.add('active'); if(p==='checkup') renderCheckup(); if(p==='trophies') renderTrophies(); }
+function openModal() { document.getElementById('modal').classList.add('open'); }
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+function saveEntry() {
+entries.unshift({type:document.getElementById('f-type').value,duree:parseInt(document.getElementById('f-duree').value)||0,cal:parseInt(document.getElementById('f-cal').value)||0,bpm:parseInt(document.getElementById('f-bpm').value)||0,km:parseFloat(document.getElementById('f-km').value)||0,date:document.getElementById('f-date').value});
+localStorage.setItem('sport-entries',JSON.stringify(entries));
+checkNewTrophies(); closeModal(); buildChart(); renderEntries(); updateStats(); renderTrophies();
+}
+
 init();
 </script>
+
 </body>
 </html>
