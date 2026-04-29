@@ -119,7 +119,7 @@ window.doSetupProfile = async function() {
 // ===== INIT APP =====
 function initApp() {
   const now = new Date(); calYear = now.getFullYear(); calMonth = now.getMonth();
-  document.getElementById('user-pseudo').textContent = window._userProfile?.pseudo || '';
+  updateUserBar();
   loadEntries();
   renderCheckup();
   renderTrophies();
@@ -515,6 +515,15 @@ const TROPHIES = [
   {id:'rank_bench225', icon:'🏋️',name:'Club 225 Certifié',  desc:'Rang Or+ au Bench Press',                   rarity:'epic',     check:e=>{const d=getGymData();return(parseFloat(d['bench']?.value)||0)>=175;}},
   {id:'pr_beast',      icon:'🔥',name:'PR Beast',           desc:'Bats ton record dans 5 exercices différents',rarity:'rare',     check:e=>Object.keys(getGymData()).length>=5},
   {id:'full_gym',      icon:'🌟',name:'Athlète Complet',    desc:'Enregistre au moins 1 record par groupe musculaire',rarity:'epic',check:e=>{const d=getGymData();return Object.keys(GYM_GROUPS).every(g=>GYM_GROUPS[g].exercises.some(ex=>(parseFloat(d[ex.id]?.value)||0)>0));}},
+  // DAILY CHALLENGES
+  {id:'daily_task_1',   icon:'✅',name:'Premier Défi',        desc:'Complète ta 1ère tâche quotidienne',          rarity:'common',   check:e=>getDailyTaskCount()>=1},
+  {id:'daily_task_10',  icon:'🎯',name:'Défi x10',            desc:'Complète 10 tâches quotidiennes',             rarity:'common',   check:e=>getDailyTaskCount()>=10},
+  {id:'daily_task_50',  icon:'⚡',name:'Défi x50',            desc:'Complète 50 tâches quotidiennes',             rarity:'rare',     check:e=>getDailyTaskCount()>=50},
+  {id:'daily_task_100', icon:'💎',name:'Centurion des Défis', desc:'Complète 100 tâches quotidiennes',            rarity:'epic',     check:e=>getDailyTaskCount()>=100},
+  {id:'daily_streak_7', icon:'🔥',name:'Semaine de Feu',      desc:'7 tâches quotidiennes de suite',              rarity:'rare',     check:e=>getDailyTaskStreak()>=7},
+  {id:'daily_streak_30',icon:'👑',name:'Mois Infernal',       desc:'30 tâches quotidiennes de suite',             rarity:'legendary',check:e=>getDailyTaskStreak()>=30},
+  // EXCLUSIVE — PREMIER UTILISATEUR
+  {id:'god_of_universe',icon:'🌌',name:'God of the Universe', desc:'👑 Premier utilisateur — Titre exclusif unique',rarity:'legendary',check:e=>currentUser?.email==='antho87cummings@gmail.com'},
 ];
 
 function getStreak(e) {
@@ -774,6 +783,236 @@ function getHighestGymRank() {
   return max;
 }
 
+// ===== DAILY CHALLENGES =====
+const DAILY_TASKS = [
+  {id:'pushup50',     icon:'💪', title:'50 Push-ups',              desc:'Fais 50 push-ups aujourd\'hui'},
+  {id:'squat100',     icon:'🦵', title:'100 Squats',               desc:'Fais 100 squats aujourd\'hui'},
+  {id:'run5km',       icon:'🏃', title:'Course 5km',               desc:'Cours 5km aujourd\'hui'},
+  {id:'plank3min',    icon:'⏱', title:'3 min de planche',          desc:'Tiens 3 minutes de planche'},
+  {id:'water4l',      icon:'💧', title:'4L d\'eau',                desc:'Bois 4L d\'eau aujourd\'hui'},
+  {id:'burpee30',     icon:'🔥', title:'30 Burpees',               desc:'Fais 30 burpees aujourd\'hui'},
+  {id:'pullup20',     icon:'🦅', title:'20 Pull-ups',              desc:'Fais 20 tractions aujourd\'hui'},
+  {id:'lunge50',      icon:'🦵', title:'50 Fentes',                desc:'Fais 50 fentes aujourd\'hui'},
+  {id:'jumprop10',    icon:'🪢', title:'10 min corde à sauter',    desc:'Saute à la corde 10 minutes'},
+  {id:'dips30',       icon:'⚡', title:'30 Dips',                  desc:'Fais 30 dips aujourd\'hui'},
+  {id:'sprint400',    icon:'💨', title:'Sprint 400m',              desc:'Fais un sprint de 400m'},
+  {id:'stretch15',    icon:'🧘', title:'15 min stretching',        desc:'Étire-toi 15 minutes'},
+  {id:'situp60',      icon:'🏋️', title:'60 Abdos',                 desc:'Fais 60 sit-ups aujourd\'hui'},
+  {id:'swim500',      icon:'🔱', title:'500m natation',            desc:'Nage 500 mètres aujourd\'hui'},
+  {id:'bike20',       icon:'🚴', title:'Vélo 20km',                desc:'Roule 20km à vélo'},
+  {id:'run3km',       icon:'🏃', title:'Course 3km',               desc:'Cours 3km aujourd\'hui'},
+  {id:'pushup100',    icon:'💥', title:'100 Push-ups',             desc:'Fais 100 push-ups aujourd\'hui'},
+  {id:'hiit20',       icon:'🔥', title:'20 min HIIT',             desc:'Fais 20 minutes de HIIT'},
+  {id:'deadlift5',    icon:'⛓️', title:'5 séries deadlift',        desc:'Fais 5 séries de deadlift'},
+  {id:'bench5',       icon:'🏋️', title:'5 séries bench press',    desc:'Fais 5 séries de bench press'},
+  {id:'squat5',       icon:'🦵', title:'5 séries squat',           desc:'Fais 5 séries de squat'},
+  {id:'yoga30',       icon:'🧘', title:'30 min de yoga',           desc:'Fais 30 minutes de yoga'},
+  {id:'walk10k',      icon:'🚶', title:'10 000 pas',               desc:'Fais 10 000 pas aujourd\'hui'},
+  {id:'pushup75',     icon:'💪', title:'75 Push-ups',              desc:'Fais 75 push-ups aujourd\'hui'},
+  {id:'run10km',      icon:'🏃', title:'Course 10km',              desc:'Cours 10km aujourd\'hui'},
+  {id:'pullup30',     icon:'🦅', title:'30 Pull-ups',              desc:'Fais 30 tractions aujourd\'hui'},
+  {id:'box3rounds',   icon:'🥊', title:'3 rounds de boxe',         desc:'Fais 3 rounds de boxe de 3 min'},
+  {id:'calf100',      icon:'🦵', title:'100 mollets',              desc:'Fais 100 reps de mollets'},
+  {id:'shoulder5',    icon:'🎯', title:'5 séries shoulder press',  desc:'5 séries de shoulder press'},
+  {id:'fullbody',     icon:'⚔️', title:'Séance full body',         desc:'Fais une séance full body complète'},
+];
+
+function getTodayTask() {
+  const now = new Date();
+  const dayOfYear = Math.floor((now - new Date(now.getFullYear(),0,0)) / 86400000);
+  return DAILY_TASKS[dayOfYear % DAILY_TASKS.length];
+}
+
+function getDailyTaskData() {
+  return JSON.parse(localStorage.getItem('daily-tasks-'+(currentUser?.uid||'')) || '{}');
+}
+function saveDailyTaskData(d) {
+  localStorage.setItem('daily-tasks-'+(currentUser?.uid||''), JSON.stringify(d));
+}
+
+function getDailyTaskCount() {
+  const data = getDailyTaskData();
+  return Object.values(data).filter(v=>v===true).length;
+}
+
+function getDailyTaskStreak() {
+  const data = getDailyTaskData();
+  let streak = 0, d = new Date();
+  for(let i=0;i<365;i++){
+    const ds = d.toISOString().split('T')[0];
+    if(data[ds]) streak++;
+    else if(streak>0) break;
+    d.setDate(d.getDate()-1);
+  }
+  return streak;
+}
+
+window.completeDailyTask = function() {
+  const task = getTodayTask();
+  const data = getDailyTaskData();
+  const td = today();
+  if(data[td]) return;
+  data[td] = true;
+  saveDailyTaskData(data);
+  showToast({icon:task.icon, name:'Défi complété ! +1 🏆'});
+  renderDailyChallenges();
+  checkNewTrophies();
+};
+
+function renderDailyChallenges() {
+  const container = document.getElementById('daily-challenge-container');
+  if(!container) return;
+  const task = getTodayTask();
+  const data = getDailyTaskData();
+  const td = today();
+  const done = data[td] === true;
+  const count = getDailyTaskCount();
+  const streak = getDailyTaskStreak();
+
+  // Next task countdown
+  const now = new Date();
+  const midnight = new Date(now); midnight.setHours(24,0,0,0);
+  const diff = midnight - now;
+  const hh = String(Math.floor(diff/3600000)).padStart(2,'0');
+  const mm = String(Math.floor((diff%3600000)/60000)).padStart(2,'0');
+  const ss = String(Math.floor((diff%60000)/1000)).padStart(2,'0');
+
+  container.innerHTML = `
+    <!-- TODAY'S TASK -->
+    <div style="background:${done?'linear-gradient(135deg,rgba(34,197,94,0.12),rgba(34,197,94,0.04))':'linear-gradient(135deg,rgba(147,51,234,0.12),rgba(255,0,128,0.06))'};border:1px solid ${done?'rgba(34,197,94,0.35)':'rgba(147,51,234,0.25)'};border-radius:18px;padding:18px;margin-bottom:10px;position:relative;overflow:hidden">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:${done?'var(--green-check)':'linear-gradient(90deg,var(--mauve),var(--rose-flash))'};border-radius:18px 18px 0 0"></div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+        <div>
+          <div style="font-size:10px;color:var(--text-muted);letter-spacing:3px;text-transform:uppercase;margin-bottom:4px">⚔ Défi du jour</div>
+          <div style="font-size:11px;color:var(--text-muted)">Change dans ${hh}:${mm}:${ss}</div>
+        </div>
+        <div style="font-size:32px">${task.icon}</div>
+      </div>
+      <div style="font-size:20px;font-weight:700;color:${done?'var(--green-check)':'var(--text)'};margin-bottom:4px">${task.title}</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px">${task.desc}</div>
+      ${done
+        ? `<div style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:var(--green-check)">✅ Défi complété aujourd'hui !</div>`
+        : `<button onclick="completeDailyTask()" style="width:100%;background:linear-gradient(135deg,var(--mauve-dark),var(--rose-dark));color:#fff;border:none;border-radius:12px;padding:13px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Rajdhani',sans-serif;letter-spacing:2px;text-transform:uppercase;box-shadow:0 4px 16px rgba(255,0,128,0.35)">⚡ J'ai complété ce défi !</button>`
+      }
+    </div>
+
+    <!-- STATS ROW -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+      <div style="background:var(--dark2);border:1px solid rgba(147,51,234,0.15);border-radius:14px;padding:12px;text-align:center">
+        <div style="font-size:24px;font-weight:700;color:var(--gold);text-shadow:0 0 10px rgba(251,191,36,0.5)">${count}</div>
+        <div style="font-size:10px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-top:2px">Défis complétés</div>
+      </div>
+      <div style="background:var(--dark2);border:1px solid rgba(255,0,128,0.15);border-radius:14px;padding:12px;text-align:center">
+        <div style="font-size:24px;font-weight:700;color:var(--rose-flash);text-shadow:0 0 10px rgba(255,0,128,0.5)">${streak} 🔥</div>
+        <div style="font-size:10px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-top:2px">Jours de suite</div>
+      </div>
+    </div>
+
+    <!-- UPCOMING TASKS -->
+    <div style="background:var(--dark2);border:1px solid rgba(147,51,234,0.12);border-radius:14px;padding:12px">
+      <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">Prochains défis</div>
+      ${[1,2,3].map(i => {
+        const dayOfYear = Math.floor((now - new Date(now.getFullYear(),0,0)) / 86400000);
+        const t = DAILY_TASKS[(dayOfYear+i) % DAILY_TASKS.length];
+        return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(147,51,234,0.08)">
+          <span style="font-size:16px">${t.icon}</span>
+          <span style="font-size:12px;color:var(--text-muted)">Dans ${i} jour${i>1?'s':''} : <span style="color:var(--text)">${t.title}</span></span>
+        </div>`;
+      }).join('')}
+    </div>
+  `;
+  // Refresh countdown every second
+  clearInterval(window._countdownInterval);
+  window._countdownInterval = setInterval(() => renderDailyChallenges(), 1000);
+}
+
+// ===== EVENTS SYSTEM =====
+async function renderEvents() {
+  const container = document.getElementById('events-container');
+  if(!container) return;
+  try {
+    const snap = await getDocs(query(collection(db,'events'), orderBy('endDate','desc'), limit(10)));
+    if(snap.empty) {
+      container.innerHTML = '<div class="empty">Aucun événement actif pour le moment<br><span style="font-size:11px">Reviens bientôt ! 🐉</span></div>';
+      return;
+    }
+    const now = new Date();
+    container.innerHTML = snap.docs.map(d => {
+      const ev = d.data();
+      const end = new Date(ev.endDate);
+      const isActive = end > now;
+      const diff = end - now;
+      const days = Math.floor(diff/86400000);
+      const hrs = Math.floor((diff%86400000)/3600000);
+      const timeLeft = isActive ? (days>0 ? `${days}j ${hrs}h restants` : `${hrs}h restantes`) : 'Terminé';
+      const isWinner = ev.winnerId === currentUser?.uid;
+      return `
+        <div style="background:${isActive?'linear-gradient(135deg,rgba(251,191,36,0.08),rgba(147,51,234,0.06))':'var(--dark2)'};border:1px solid ${isActive?'rgba(251,191,36,0.3)':'rgba(147,51,234,0.12)'};border-radius:16px;padding:16px;margin-bottom:10px;position:relative;overflow:hidden">
+          ${isActive?`<div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--gold),var(--rose-flash))"></div>`:''}
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+            <div style="font-size:11px;font-weight:700;color:${isActive?'var(--gold)':'var(--text-muted)'};letter-spacing:2px;text-transform:uppercase">${isActive?'⚡ ACTIF':'✓ TERMINÉ'}</div>
+            <div style="font-size:11px;color:var(--text-muted)">${timeLeft}</div>
+          </div>
+          <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px">${ev.icon||'🏆'} ${ev.title}</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">${ev.description}</div>
+          ${ev.prize?`<div style="background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.2);border-radius:10px;padding:8px 10px;font-size:11px;color:var(--gold);margin-bottom:8px">🏆 Prix : ${ev.prize}</div>`:''}
+          ${isWinner?`<div style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);border-radius:10px;padding:8px 10px;font-size:12px;font-weight:700;color:var(--green-check)">👑 Tu as gagné cet événement !</div>`:''}
+          ${ev.winnerPseudo&&!isActive?`<div style="font-size:11px;color:var(--text-muted);margin-top:6px">Gagnant : <span style="color:var(--gold);font-weight:700">${ev.winnerPseudo}</span></div>`:''}
+        </div>`;
+    }).join('');
+  } catch(e) {
+    container.innerHTML = '<div class="empty" style="font-size:11px">Chargement des événements...</div>';
+  }
+}
+
+// ===== TITLE SYSTEM =====
+function getUnlockedTrophies() {
+  return TROPHIES.filter(t => t.check(entries));
+}
+
+window.openTitleModal = function() {
+  const modal = document.getElementById('title-modal');
+  const grid = document.getElementById('title-modal-grid');
+  if(!modal||!grid) return;
+  const unlocked = getUnlockedTrophies();
+  const current = window._userProfile?.selectedTitle || null;
+  grid.innerHTML = [
+    {id:'none', icon:'⚔️', name:'Aucun titre', desc:'Pas de titre affiché'},
+    ...unlocked
+  ].map(t => `
+    <div onclick="selectTitle('${t.id}')" style="background:${current===t.id?'linear-gradient(135deg,rgba(147,51,234,0.25),rgba(255,0,128,0.15))':'var(--dark3)'};border:1px solid ${current===t.id?'var(--rose-flash)':'rgba(147,51,234,0.2)'};border-radius:12px;padding:10px;text-align:center;cursor:pointer;transition:all 0.15s">
+      <div style="font-size:22px;margin-bottom:4px">${t.icon}</div>
+      <div style="font-size:9px;font-weight:700;color:${current===t.id?'var(--rose-light)':'var(--text-muted)'};letter-spacing:1px">${t.name}</div>
+    </div>`).join('');
+  modal.classList.add('open');
+};
+
+window.selectTitle = async function(trophyId) {
+  if(!currentUser) return;
+  const title = trophyId === 'none' ? null : trophyId;
+  await updateDoc(doc(db,'users',currentUser.uid),{selectedTitle: title});
+  window._userProfile.selectedTitle = title;
+  updateUserBar();
+  document.getElementById('title-modal')?.classList.remove('open');
+  showToast({icon:'✨', name:'Titre mis à jour !'});
+};
+
+function updateUserBar() {
+  const pseudoEl = document.getElementById('user-pseudo');
+  const titleEl = document.getElementById('user-title');
+  if(pseudoEl) pseudoEl.textContent = window._userProfile?.pseudo || '';
+  const selTitle = window._userProfile?.selectedTitle;
+  if(titleEl) {
+    if(selTitle) {
+      const t = TROPHIES.find(x=>x.id===selTitle);
+      if(t) { titleEl.textContent = t.icon+' '+t.name; titleEl.style.display='block'; }
+      else titleEl.style.display='none';
+    } else {
+      titleEl.style.display='none';
+    }
+  }
+}
+
 // ===== TRACKER CHART & STATS =====
 function buildChart() {
   const ctx=document.getElementById('myChart'); if(!ctx) return;
@@ -830,6 +1069,7 @@ window.showPage = function(p,btn){
   if(p==='calendar') renderCalendar();
   if(p==='social'){renderLeaderboard();renderFriends();}
   if(p==='gym') renderGymPage();
+  if(p==='defis'){renderDailyChallenges();renderEvents();}
 };
 
 // ===== MODAL =====
@@ -1171,14 +1411,139 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 <!-- WARRIORS -->
 <div class="anime-strip">
   <svg class="girl-wrap" viewBox="0 0 76 118" fill="none"><defs><linearGradient id="v1c" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1a0a2e"/><stop offset="100%" stop-color="#0a0418"/></linearGradient><linearGradient id="v1a" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2a2a3a"/><stop offset="100%" stop-color="#161622"/></linearGradient><linearGradient id="v1s" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#d4a878"/><stop offset="100%" stop-color="#b88858"/></linearGradient></defs><path d="M4 55 Q0 70 0 90 Q0 105 4 118 L22 118 Q20 98 20 80 Q21 65 38 60 Q55 65 56 80 Q56 98 54 118 L72 118 Q76 105 76 90 Q76 70 72 55 Q62 45 38 43 Q14 45 4 55Z" fill="url(#v1c)"/><path d="M24 58 Q38 54 52 58 L52 80 Q38 84 24 80Z" fill="url(#v1a)"/><text x="38" y="74" text-anchor="middle" font-size="10" fill="#fde68a" opacity="0.8" font-family="serif">ᚢ</text><rect x="22" y="79" width="32" height="5" rx="2" fill="#3a2010"/><path d="M24 59 Q12 66 8 80 Q13 73 17 67 Q20 62 24 59Z" fill="url(#v1c)"/><path d="M52 59 Q64 66 68 80 Q63 73 59 67 Q56 62 52 59Z" fill="url(#v1c)"/><line x1="68" y1="20" x2="68" y2="118" stroke="#5a3a18" stroke-width="2.5" stroke-linecap="round"/><path d="M64 20 L68 6 L72 20 L70 18 L68 14 L66 18Z" fill="#c0c8d8"/><rect x="31" y="40" width="14" height="10" rx="3" fill="url(#v1s)"/><path d="M26 46 Q22 55 23 68 Q27 65 28 55 Q30 48 32 46Z" fill="#d0d0d8" opacity="0.9"/><path d="M50 46 Q54 55 53 68 Q49 65 48 55 Q46 48 44 46Z" fill="#d0d0d8" opacity="0.9"/><path d="M28 55 Q32 68 38 72 Q44 68 48 55 Q44 62 38 64 Q32 62 28 55Z" fill="#d8d8e0" opacity="0.85"/><ellipse cx="38" cy="28" rx="16" ry="16" fill="url(#v1s)"/><path d="M22 26 Q22 10 38 8 Q54 10 54 26 Q50 22 38 21 Q26 22 22 26Z" fill="#2a2a3a"/><path d="M22 26 Q38 24 54 26" stroke="#fde68a" stroke-width="1.5" opacity="0.7"/><path d="M22 18 Q10 12 4 16 Q8 20 14 20 Q18 22 22 22Z" fill="#1a2a1a"/><path d="M54 18 Q66 12 72 16 Q68 20 62 20 Q58 22 54 22Z" fill="#1a2a1a"/><rect x="35" y="22" width="6" height="16" rx="2" fill="#1e1e2e" opacity="0.8"/><rect x="23" y="26" width="10" height="8" rx="3" fill="#0a0010" opacity="0.9"/><ellipse cx="46" cy="30" rx="5" ry="5" fill="#0a0010"/><ellipse cx="46" cy="30" rx="3.5" ry="3.5" fill="#9333ea"/><ellipse cx="46" cy="30" rx="2" ry="2" fill="#c084fc"/><circle cx="44" cy="28" r="1.2" fill="white" opacity="0.8"/><path d="M8 52 Q4 46 6 42 Q10 44 12 48 Q14 50 10 52Z" fill="#0a0a14"/><circle cx="5" cy="41" r="1" fill="#c084fc"/><path d="M68 52 Q72 46 70 42 Q66 44 64 48 Q62 50 66 52Z" fill="#0a0a14"/><circle cx="71" cy="41" r="1" fill="#c084fc"/></svg>
-  <svg class="girl-wrap" viewBox="0 0 76 118" fill="none"><defs><linearGradient id="v2s" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#d89868"/><stop offset="100%" stop-color="#b87848"/></linearGradient><linearGradient id="v2a" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1e3050"/><stop offset="100%" stop-color="#0e1828"/></linearGradient><linearGradient id="v2ch" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3a4050"/><stop offset="100%" stop-color="#2a2e38"/></linearGradient></defs><path d="M10 58 Q4 68 2 84 Q0 98 2 118 L24 118 Q22 98 22 82 Q23 68 38 63 Q53 68 54 82 Q54 98 52 118 L74 118 Q76 98 74 84 Q72 68 66 58 Q56 50 38 48 Q20 50 10 58Z" fill="url(#v2ch)"/><path d="M20 58 Q38 53 56 58 L58 84 Q38 88 18 84Z" fill="url(#v2a)"/><path d="M40 64 L36 73 L40 71 L36 80" stroke="#ff2d9b" stroke-width="1.5" stroke-linecap="round"/><path d="M10 58 Q4 52 6 46 Q14 50 18 58Z" fill="url(#v2a)"/><path d="M66 58 Q72 52 70 46 Q62 50 58 58Z" fill="url(#v2a)"/><rect x="18" y="82" width="40" height="6" rx="3" fill="#2a1808"/><rect x="34" y="81" width="8" height="8" rx="2" fill="#fde68a"/><path d="M10 59 Q1 67 0 82 Q5 74 9 68 Q10 63 10 59Z" fill="url(#v2s)"/><path d="M66 59 Q75 67 76 82 Q71 74 67 68 Q66 63 66 59Z" fill="url(#v2s)"/><line x1="10" y1="82" x2="4" y2="42" stroke="#5a3a18" stroke-width="3" stroke-linecap="round"/><rect x="-2" y="30" width="18" height="14" rx="2" fill="#5a6070"/><rect x="-2" y="30" width="18" height="14" rx="2" stroke="#fde68a" stroke-width="1" fill="none" opacity="0.6"/><text x="7" y="41" text-anchor="middle" font-size="8" fill="#fde68a" opacity="0.9" font-family="serif">ᚦ</text><rect x="31" y="42" width="16" height="12" rx="3" fill="url(#v2s)"/><path d="M24 48 Q18 58 20 72 Q25 68 26 58 Q28 50 30 48Z" fill="#9a2808"/><path d="M52 48 Q58 58 56 72 Q51 68 50 58 Q48 50 46 48Z" fill="#9a2808"/><path d="M26 57 Q30 70 38 75 Q46 70 50 57 Q45 64 38 66 Q31 64 26 57Z" fill="#b03010"/><ellipse cx="38" cy="28" rx="17" ry="17" fill="url(#v2s)"/><path d="M21 26 Q21 8 38 6 Q55 8 55 26 Q51 20 38 19 Q25 20 21 26Z" fill="#1e2a40"/><path d="M21 26 Q38 22 55 26" stroke="#fde68a" stroke-width="2" opacity="0.7"/><path d="M21 26 Q18 32 20 40 Q24 36 25 28Z" fill="#1a2438"/><path d="M55 26 Q58 32 56 40 Q52 36 51 28Z" fill="#1a2438"/><rect x="35" y="20" width="6" height="18" rx="3" fill="#16202e"/><ellipse cx="28" cy="28" rx="5.5" ry="5" fill="#080810"/><ellipse cx="28" cy="28" rx="4" ry="3.8" fill="#1e60c0"/><ellipse cx="28" cy="28" rx="2.2" ry="2" fill="#3a90e0"/><circle cx="26" cy="26" r="1.5" fill="white" opacity="0.8"/><ellipse cx="48" cy="28" rx="5.5" ry="5" fill="#080810"/><ellipse cx="48" cy="28" rx="4" ry="3.8" fill="#1e60c0"/><ellipse cx="48" cy="28" rx="2.2" ry="2" fill="#3a90e0"/><circle cx="46" cy="26" r="1.5" fill="white" opacity="0.8"/><path d="M62 20 L58 30 L62 28 L58 38" stroke="#ff2d9b" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/></svg>
+  <svg class="girl-wrap" viewBox="0 0 76 118" fill="none">
+    <defs>
+      <linearGradient id="mjHead" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#4a5468"/><stop offset="40%" stop-color="#2e3848"/><stop offset="100%" stop-color="#1a2230"/></linearGradient>
+      <linearGradient id="mjEdge" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#8a9ab0"/><stop offset="50%" stop-color="#c8d8e8"/><stop offset="100%" stop-color="#8a9ab0"/></linearGradient>
+      <linearGradient id="mjHandle" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#5a3a18"/><stop offset="50%" stop-color="#3a2010"/><stop offset="100%" stop-color="#2a1408"/></linearGradient>
+      <linearGradient id="mjWrap" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#8a4a10"/><stop offset="100%" stop-color="#4a2808"/></linearGradient>
+      <radialGradient id="mjGlow" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#ff2d9b" stop-opacity="0.6"/><stop offset="100%" stop-color="#9333ea" stop-opacity="0"/></radialGradient>
+      <filter id="mjBlur"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      <filter id="mjGlowFilter"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    </defs>
+
+    <!-- Animated glow aura behind hammer -->
+    <ellipse cx="38" cy="55" rx="28" ry="32" fill="url(#mjGlow)" opacity="0.5">
+      <animate attributeName="opacity" values="0.3;0.7;0.3" dur="2.5s" repeatCount="indefinite"/>
+      <animate attributeName="rx" values="26;30;26" dur="2.5s" repeatCount="indefinite"/>
+    </ellipse>
+
+    <!-- Lightning bolts background -->
+    <path d="M12 20 L8 32 L13 30 L9 42" stroke="#ff2d9b" stroke-width="1.2" stroke-linecap="round" opacity="0.0">
+      <animate attributeName="opacity" values="0;0.8;0;0.6;0" dur="2s" repeatCount="indefinite"/>
+    </path>
+    <path d="M64 18 L68 30 L63 28 L67 40" stroke="#c084fc" stroke-width="1.2" stroke-linecap="round" opacity="0">
+      <animate attributeName="opacity" values="0;0;0.7;0;0.5;0" dur="2.3s" repeatCount="indefinite"/>
+    </path>
+    <path d="M20 10 L17 20 L21 18 L18 28" stroke="#fde68a" stroke-width="1" stroke-linecap="round" opacity="0">
+      <animate attributeName="opacity" values="0;0.6;0;0;0.4;0" dur="1.8s" repeatCount="indefinite"/>
+    </path>
+    <path d="M58 8 L61 18 L57 16 L60 26" stroke="#ff0080" stroke-width="1" stroke-linecap="round" opacity="0">
+      <animate attributeName="opacity" values="0;0;0.5;0;0.7;0" dur="2.1s" repeatCount="indefinite"/>
+    </path>
+
+    <!-- HANDLE with wrap -->
+    <rect x="34" y="62" width="8" height="52" rx="3" fill="url(#mjHandle)"/>
+    <!-- Handle leather wrap stripes -->
+    <rect x="33.5" y="66" width="9" height="3" rx="1" fill="url(#mjWrap)" opacity="0.9"/>
+    <rect x="33.5" y="72" width="9" height="3" rx="1" fill="url(#mjWrap)" opacity="0.9"/>
+    <rect x="33.5" y="78" width="9" height="3" rx="1" fill="url(#mjWrap)" opacity="0.9"/>
+    <rect x="33.5" y="84" width="9" height="3" rx="1" fill="url(#mjWrap)" opacity="0.9"/>
+    <rect x="33.5" y="90" width="9" height="3" rx="1" fill="url(#mjWrap)" opacity="0.9"/>
+    <rect x="33.5" y="96" width="9" height="3" rx="1" fill="url(#mjWrap)" opacity="0.9"/>
+    <!-- Handle center line -->
+    <line x1="38" y1="63" x2="38" y2="113" stroke="#6a4020" stroke-width="0.8" opacity="0.5"/>
+    <!-- Pommel at bottom -->
+    <ellipse cx="38" cy="113" rx="6" ry="4" fill="#2e1a08"/>
+    <ellipse cx="38" cy="113" rx="5" ry="3" fill="#4a2a10"/>
+    <ellipse cx="38" cy="113" rx="3" ry="1.8" fill="url(#mjEdge)" opacity="0.6"/>
+
+    <!-- HAMMER HEAD — main body -->
+    <rect x="8" y="22" width="60" height="42" rx="5" fill="url(#mjHead)"/>
+    <!-- Top face highlight -->
+    <rect x="9" y="22" width="58" height="3" rx="3" fill="url(#mjEdge)" opacity="0.5"/>
+    <!-- Bottom face highlight -->
+    <rect x="9" y="59" width="58" height="3" rx="3" fill="url(#mjEdge)" opacity="0.3"/>
+    <!-- Left face -->
+    <rect x="8" y="23" width="3" height="40" rx="2" fill="url(#mjEdge)" opacity="0.4"/>
+    <!-- Right face -->
+    <rect x="65" y="23" width="3" height="40" rx="2" fill="url(#mjEdge)" opacity="0.4"/>
+    <!-- Inner panel depth -->
+    <rect x="14" y="27" width="48" height="32" rx="3" fill="#121822" opacity="0.6"/>
+
+    <!-- RUNE ENGRAVINGS glowing -->
+    <!-- Center rune ᚦ (Thurisaz - Thor) -->
+    <text x="38" y="46" text-anchor="middle" font-size="18" fill="#ff2d9b" font-family="serif" filter="url(#mjGlowFilter)" opacity="0.9">ᚦ</text>
+    <text x="38" y="46" text-anchor="middle" font-size="18" fill="#ffaacc" font-family="serif" opacity="0.6">ᚦ</text>
+
+    <!-- Left rune ᚢ (Uruz - strength) -->
+    <text x="20" y="46" text-anchor="middle" font-size="11" fill="#c084fc" font-family="serif" filter="url(#mjGlowFilter)" opacity="0.8">ᚢ</text>
+    <!-- Right rune ᚱ (Raido - journey) -->
+    <text x="56" y="46" text-anchor="middle" font-size="11" fill="#c084fc" font-family="serif" filter="url(#mjGlowFilter)" opacity="0.8">ᚱ</text>
+
+    <!-- Small corner runes -->
+    <text x="15" y="34" text-anchor="middle" font-size="7" fill="#9333ea" font-family="serif" opacity="0.7">ᚨ</text>
+    <text x="61" y="34" text-anchor="middle" font-size="7" fill="#9333ea" font-family="serif" opacity="0.7">ᚾ</text>
+    <text x="15" y="56" text-anchor="middle" font-size="7" fill="#9333ea" font-family="serif" opacity="0.7">ᛏ</text>
+    <text x="61" y="56" text-anchor="middle" font-size="7" fill="#9333ea" font-family="serif" opacity="0.7">ᛗ</text>
+
+    <!-- Rune glow pulse animation -->
+    <rect x="14" y="27" width="48" height="32" rx="3" fill="none" stroke="#ff2d9b" stroke-width="0.8" opacity="0">
+      <animate attributeName="opacity" values="0;0.5;0" dur="2s" repeatCount="indefinite"/>
+    </rect>
+
+    <!-- Golden trim lines on hammer -->
+    <line x1="8" y1="43" x2="68" y2="43" stroke="#fde68a" stroke-width="0.6" opacity="0.3"/>
+    <line x1="14" y1="27" x2="14" y2="59" stroke="#fde68a" stroke-width="0.5" opacity="0.25"/>
+    <line x1="62" y1="27" x2="62" y2="59" stroke="#fde68a" stroke-width="0.5" opacity="0.25"/>
+
+    <!-- Rivet bolts at corners -->
+    <circle cx="16" cy="29" r="2.5" fill="#3a4858"/><circle cx="16" cy="29" r="1.5" fill="#6a7888"/>
+    <circle cx="60" cy="29" r="2.5" fill="#3a4858"/><circle cx="60" cy="29" r="1.5" fill="#6a7888"/>
+    <circle cx="16" cy="57" r="2.5" fill="#3a4858"/><circle cx="16" cy="57" r="1.5" fill="#6a7888"/>
+    <circle cx="60" cy="57" r="2.5" fill="#3a4858"/><circle cx="60" cy="57" r="1.5" fill="#6a7888"/>
+
+    <!-- Sparks / electricity emanating from hammer -->
+    <circle cx="8" cy="43" r="2" fill="#ff2d9b" opacity="0">
+      <animate attributeName="opacity" values="0;0.9;0" dur="1.5s" repeatCount="indefinite"/>
+      <animate attributeName="r" values="1;3;1" dur="1.5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="68" cy="43" r="2" fill="#9333ea" opacity="0">
+      <animate attributeName="opacity" values="0;0;0.9;0" dur="1.8s" repeatCount="indefinite"/>
+      <animate attributeName="r" values="1;3;1" dur="1.8s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="38" cy="22" r="2" fill="#fde68a" opacity="0">
+      <animate attributeName="opacity" values="0;0.8;0" dur="2.2s" repeatCount="indefinite"/>
+      <animate attributeName="r" values="1;2.5;1" dur="2.2s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- Floating rune particles -->
+    <text x="4" y="16" font-size="8" fill="#ff2d9b" font-family="serif" opacity="0">ᚦ
+      <animate attributeName="opacity" values="0;0.7;0" dur="3s" repeatCount="indefinite"/>
+      <animateTransform attributeName="transform" type="translate" values="0,0;-2,-8;0,0" dur="3s" repeatCount="indefinite"/>
+    </text>
+    <text x="66" y="14" font-size="7" fill="#c084fc" font-family="serif" opacity="0">ᚢ
+      <animate attributeName="opacity" values="0;0;0.6;0" dur="3.5s" repeatCount="indefinite"/>
+      <animateTransform attributeName="transform" type="translate" values="0,0;2,-6;0,0" dur="3.5s" repeatCount="indefinite"/>
+    </text>
+    <text x="2" y="65" font-size="6" fill="#9333ea" font-family="serif" opacity="0">ᚱ
+      <animate attributeName="opacity" values="0;0.5;0" dur="2.8s" repeatCount="indefinite"/>
+      <animateTransform attributeName="transform" type="translate" values="0,0;-3,-5;0,0" dur="2.8s" repeatCount="indefinite"/>
+    </text>
+  </svg>
   <svg class="girl-wrap" viewBox="0 0 76 118" fill="none"><defs><linearGradient id="v3s" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f0d0b0"/><stop offset="100%" stop-color="#d8a880"/></linearGradient><linearGradient id="v3a" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3a2050"/><stop offset="100%" stop-color="#20103a"/></linearGradient><linearGradient id="v3h" x1="0" y1="0" x2="0.2" y2="1"><stop offset="0%" stop-color="#f8e8c0"/><stop offset="100%" stop-color="#e0c080"/></linearGradient></defs><path d="M14 34 Q4 50 2 72 Q0 90 4 118 Q10 92 12 68 Q14 50 18 38Z" fill="url(#v3h)" opacity="0.9"/><path d="M62 34 Q72 50 74 72 Q76 90 72 118 Q66 92 64 68 Q62 50 58 38Z" fill="url(#v3h)" opacity="0.85"/><path d="M18 56 Q10 65 8 80 Q6 94 7 110 L26 110 Q25 90 25 76 Q26 65 38 61 Q50 65 51 76 Q51 90 50 110 L69 110 Q70 94 68 80 Q66 65 58 56 Q50 50 38 49 Q26 50 18 56Z" fill="url(#v3a)"/><path d="M22 56 Q38 51 54 56 L54 78 Q38 82 22 78Z" fill="#2a1540"/><ellipse cx="38" cy="62" rx="4" ry="3" fill="#9333ea"/><ellipse cx="38" cy="62" rx="2.5" ry="2" fill="#c084fc"/><path d="M22 56 Q38 52 54 56" stroke="#fde68a" stroke-width="1.5" opacity="0.7"/><path d="M18 56 Q10 50 12 43 Q18 47 22 55Z" fill="#2a1540"/><path d="M58 56 Q66 50 64 43 Q58 47 54 55Z" fill="#2a1540"/><rect x="20" y="77" width="36" height="5" rx="2.5" fill="#1a0a10"/><rect x="33" y="76" width="10" height="7" rx="2" fill="#fde68a"/><path d="M18 57 Q8 65 6 80 Q10 73 14 66 Q16 61 18 57Z" fill="url(#v3s)"/><path d="M58 57 Q68 65 70 80 Q66 73 62 66 Q60 61 58 57Z" fill="url(#v3s)"/><circle cx="5" cy="75" r="12" fill="#1a0a2e"/><circle cx="5" cy="75" r="10" stroke="#fde68a" stroke-width="1.5" fill="none" opacity="0.7"/><line x1="5" y1="63" x2="5" y2="87" stroke="#fde68a" stroke-width="1" opacity="0.5"/><line x1="-7" y1="75" x2="17" y2="75" stroke="#fde68a" stroke-width="1" opacity="0.5"/><circle cx="5" cy="75" r="3" fill="#fde68a" opacity="0.9"/><line x1="68" y1="80" x2="76" y2="30" stroke="#8a9ab0" stroke-width="2.5" stroke-linecap="round"/><line x1="63" y1="60" x2="73" y2="55" stroke="#8a9ab0" stroke-width="3" stroke-linecap="round"/><path d="M71 34 L76 28 L77 30 L72 36Z" fill="#c8d0e0"/><rect x="31" y="41" width="14" height="11" rx="3" fill="url(#v3s)"/><ellipse cx="38" cy="27" rx="16" ry="17" fill="url(#v3s)"/><path d="M22 24 Q22 8 38 6 Q54 8 54 24 Q50 19 38 18 Q26 19 22 24Z" fill="#2a2a3a"/><path d="M22 24 Q38 21 54 24" stroke="#fde68a" stroke-width="1.5" opacity="0.7"/><path d="M22 18 Q8 8 2 12 Q6 18 12 18 Q16 20 20 20Z" fill="#e8eaf0"/><path d="M54 18 Q68 8 74 12 Q70 18 64 18 Q60 20 56 20Z" fill="#e8eaf0"/><rect x="35" y="18" width="6" height="14" rx="2" fill="#1e1e2e" opacity="0.6"/><ellipse cx="28" cy="26" rx="5.5" ry="5.5" fill="#080010"/><ellipse cx="28" cy="26" rx="4" ry="4" fill="#7c3aed"/><ellipse cx="28" cy="26.5" rx="2.2" ry="2.2" fill="#c084fc"/><circle cx="26" cy="24" r="1.5" fill="white" opacity="0.85"/><ellipse cx="48" cy="26" rx="5.5" ry="5.5" fill="#080010"/><ellipse cx="48" cy="26" rx="4" ry="4" fill="#7c3aed"/><ellipse cx="48" cy="26.5" rx="2.2" ry="2.2" fill="#c084fc"/><circle cx="46" cy="24" r="1.5" fill="white" opacity="0.85"/><path d="M32 33 Q38 36 44 33" stroke="#c07070" stroke-width="1" fill="none" stroke-linecap="round"/></svg>
 </div>
 
 <!-- USER BAR -->
 <div class="user-bar">
-  <div class="user-bar-pseudo">⚔ <span id="user-pseudo"></span></div>
-  <button class="logout-btn" onclick="doLogout()">Déconnexion</button>
+  <div>
+    <div class="user-bar-pseudo">⚔ <span id="user-pseudo"></span></div>
+    <div id="user-title" style="display:none;font-size:10px;letter-spacing:1px;color:var(--gold);text-shadow:0 0 8px rgba(251,191,36,0.5);margin-top:1px"></div>
+  </div>
+  <div style="display:flex;gap:6px;align-items:center">
+    <button class="logout-btn" onclick="openTitleModal()" style="border-color:rgba(251,191,36,0.3);color:var(--gold)">✨ Titre</button>
+    <button class="logout-btn" onclick="doLogout()">Déco</button>
+  </div>
 </div>
 
 <!-- NAV -->
@@ -1186,6 +1551,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   <button class="nav-tab active" onclick="showPage('tracker',this)">⚔ Tracker</button>
   <button class="nav-tab" onclick="showPage('calendar',this)">📅 Calendrier</button>
   <button class="nav-tab" onclick="showPage('checkup',this)">✅ Checkup</button>
+  <button class="nav-tab" onclick="showPage('defis',this)">🎯 Défis</button>
   <button class="nav-tab" onclick="showPage('gym',this)">🏋️ Gym</button>
   <button class="nav-tab" onclick="showPage('social',this)">🤝 Social</button>
   <button class="nav-tab" onclick="showPage('trophies',this)">🏆 Trophées</button>
@@ -1273,6 +1639,21 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   </div>
 </div>
 
+<!-- DÉFIS & ÉVÉNEMENTS -->
+<div class="page" id="page-defis">
+  <div style="display:flex;gap:0;margin:10px 12px 0;border-radius:12px;overflow:hidden;border:1px solid rgba(147,51,234,0.2)">
+    <button id="defi-tab-daily" onclick="switchDefiTab('daily')" style="flex:1;padding:9px;text-align:center;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;background:linear-gradient(135deg,var(--mauve-dark),var(--rose-dark));color:#fff;border:none;font-family:'Rajdhani',sans-serif">🎯 Quotidien</button>
+    <button id="defi-tab-events" onclick="switchDefiTab('events')" style="flex:1;padding:9px;text-align:center;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;background:var(--dark3);color:var(--text-muted);border:none;font-family:'Rajdhani',sans-serif">⚡ Événements</button>
+  </div>
+  <div id="defi-panel-daily" style="padding:10px 12px 14px">
+    <div id="daily-challenge-container"></div>
+  </div>
+  <div id="defi-panel-events" style="display:none;padding:10px 12px 14px">
+    <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px">Événements spéciaux limités</div>
+    <div id="events-container"></div>
+  </div>
+</div>
+
 <!-- GYM / RANKS PAGE -->
 <div class="page" id="page-gym">
   <div class="section" style="padding-top:10px">
@@ -1323,6 +1704,16 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
 </div><!-- end app-screen -->
 
+<!-- TITLE SELECTION MODAL -->
+<div class="modal" id="title-modal">
+  <div class="modal-box">
+    <div class="modal-title">✨ Choisir mon titre ✨</div>
+    <div style="font-size:11px;color:var(--text-muted);text-align:center;margin-bottom:14px;letter-spacing:1px">Sélectionne un trophée débloqué comme titre</div>
+    <div id="title-modal-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-height:50vh;overflow-y:auto"></div>
+    <button class="btn-cancel" style="width:100%;margin-top:14px" onclick="document.getElementById('title-modal').classList.remove('open')">Fermer</button>
+  </div>
+</div>
+
 <!-- MODAL SÉANCE -->
 <div class="modal" id="modal">
   <div class="modal-box">
@@ -1354,6 +1745,17 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 </div>
 
 <script>
+function switchDefiTab(tab) {
+  const isDaily = tab === 'daily';
+  document.getElementById('defi-panel-daily').style.display = isDaily ? 'block' : 'none';
+  document.getElementById('defi-panel-events').style.display = isDaily ? 'none' : 'block';
+  const td = document.getElementById('defi-tab-daily');
+  const te = document.getElementById('defi-tab-events');
+  if(td){td.style.background=isDaily?'linear-gradient(135deg,var(--mauve-dark),var(--rose-dark))':'var(--dark3)';td.style.color=isDaily?'#fff':'var(--text-muted)';}
+  if(te){te.style.background=isDaily?'var(--dark3)':'linear-gradient(135deg,var(--mauve-dark),var(--rose-dark))';te.style.color=isDaily?'var(--text-muted)':'#fff';}
+  if(!isDaily) renderEvents();
+}
+
 function switchAuthTab(tab) {
   const isLogin = tab === 'login';
   document.getElementById('tab-login').classList.toggle('active', isLogin);
