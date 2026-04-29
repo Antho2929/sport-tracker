@@ -505,6 +505,16 @@ const TROPHIES = [
   {id:'global_top1',icon:'🐉',name:'Dieu Suprême',desc:'#1 mondial — Tu domines l\'arène !',rarity:'legendary',check:e=>window._myGlobalRank===1},
   {id:'global_top1_x3',icon:'🌩️',name:'Zeus Éternel',desc:'#1 mondial 3 fois',rarity:'legendary',check:e=>(window._userProfile?.globalWins||0)>=3},
   {id:'global_podium',icon:'🏆',name:'Enfant de l\'Olympe',desc:'Top 3 mondial 3 fois',rarity:'legendary',check:e=>(window._userProfile?.globalPodiums||0)>=3},
+  // GYM RANKS
+  {id:'rank_argent',   icon:'⚪',name:'Guerrier d\'Argent', desc:'Atteins le rang Argent dans un exercice',   rarity:'common',   check:e=>getHighestGymRank()>=1},
+  {id:'rank_or',       icon:'🟡',name:'Guerrier d\'Or',     desc:'Atteins le rang Or dans un exercice',       rarity:'rare',     check:e=>getHighestGymRank()>=2},
+  {id:'rank_diamant',  icon:'💎',name:'Guerrier Diamant',   desc:'Atteins le rang Diamant dans un exercice',  rarity:'epic',     check:e=>getHighestGymRank()>=3},
+  {id:'rank_maitre',   icon:'💜',name:'Maître Guerrier',    desc:'Atteins le rang Maître dans un exercice',   rarity:'epic',     check:e=>getHighestGymRank()>=4},
+  {id:'rank_legend',   icon:'👑',name:'Guerrier Légendaire',desc:'Atteins le rang Légendaire dans un exercice',rarity:'legendary',check:e=>getHighestGymRank()>=5},
+  {id:'rank_mythic',   icon:'🐉',name:'Être Mythique',      desc:'Atteins le rang Mythique — sommet absolu',   rarity:'legendary',check:e=>getHighestGymRank()>=6},
+  {id:'rank_bench225', icon:'🏋️',name:'Club 225 Certifié',  desc:'Rang Or+ au Bench Press',                   rarity:'epic',     check:e=>{const d=getGymData();return(parseFloat(d['bench']?.value)||0)>=175;}},
+  {id:'pr_beast',      icon:'🔥',name:'PR Beast',           desc:'Bats ton record dans 5 exercices différents',rarity:'rare',     check:e=>Object.keys(getGymData()).length>=5},
+  {id:'full_gym',      icon:'🌟',name:'Athlète Complet',    desc:'Enregistre au moins 1 record par groupe musculaire',rarity:'epic',check:e=>{const d=getGymData();return Object.keys(GYM_GROUPS).every(g=>GYM_GROUPS[g].exercises.some(ex=>(parseFloat(d[ex.id]?.value)||0)>0));}},
 ];
 
 function getStreak(e) {
@@ -540,6 +550,228 @@ function checkNewTrophies() {
   const newOnes=current.filter(id=>!prev.includes(id));
   localStorage.setItem('unlocked-trophies-'+(currentUser?.uid||''),JSON.stringify(current));
   if(newOnes.length>0){const t=TROPHIES.find(x=>x.id===newOnes[0]);if(t)showToast(t);}
+}
+
+// ===== GYM RANK SYSTEM =====
+const RANKS = [
+  { id:'bronze',   label:'Bronze',    icon:'🩶', color:'#94a3b8', min:0   },
+  { id:'argent',   label:'Argent',    icon:'⚪', color:'#cbd5e1', min:45  },
+  { id:'or',       label:'Or',        icon:'🟡', color:'#fbbf24', min:95  },
+  { id:'diamant',  label:'Diamant',   icon:'💎', color:'#38bdf8', min:155 },
+  { id:'maitre',   label:'Maître',    icon:'💜', color:'#c084fc', min:215 },
+  { id:'legendary',label:'Légendaire',icon:'👑', color:'#ff0080', min:285 },
+  { id:'mythic',   label:'Mythique',  icon:'🐉', color:'#fde68a', min:365 },
+];
+
+// Exercises by muscle group — key, name, unit, rank thresholds (lbs unless noted)
+const GYM_GROUPS = {
+  poitrine: {
+    label:'Poitrine', icon:'🫁',
+    exercises:[
+      {id:'bench',        name:'Bench Press',         unit:'lbs', thresholds:[0,65,115,175,225,285,365]},
+      {id:'incline_bench',name:'Incline Bench Press',  unit:'lbs', thresholds:[0,55,95,145,185,245,315]},
+      {id:'db_press',     name:'Dumbbell Press',       unit:'lbs', thresholds:[0,30,50,70,95,120,155]},
+      {id:'cable_fly',    name:'Cable Fly',            unit:'lbs', thresholds:[0,25,40,60,80,105,135]},
+      {id:'dips_bw',      name:'Dips (poids corps)',   unit:'reps',thresholds:[0,5,10,15,20,25,30]},
+    ]
+  },
+  biceps: {
+    label:'Biceps', icon:'💪',
+    exercises:[
+      {id:'db_curl',      name:'Dumbbell Curl',        unit:'lbs', thresholds:[0,20,30,45,60,75,95]},
+      {id:'hammer_curl',  name:'Hammer Curl',          unit:'lbs', thresholds:[0,20,35,50,65,80,100]},
+      {id:'cable_curl',   name:'Cable Curl',           unit:'lbs', thresholds:[0,25,40,55,75,95,120]},
+      {id:'bar_curl',     name:'Curl avec barre',      unit:'lbs', thresholds:[0,45,65,95,125,155,195]},
+      {id:'preacher_curl',name:'Preacher Curl',        unit:'lbs', thresholds:[0,35,55,80,105,135,170]},
+    ]
+  },
+  triceps: {
+    label:'Triceps', icon:'⚡',
+    exercises:[
+      {id:'tri_dips',     name:'Dips triceps',         unit:'reps',thresholds:[0,5,10,15,20,25,30]},
+      {id:'pushdown',     name:'Tricep Pushdown',      unit:'lbs', thresholds:[0,30,50,70,95,120,155]},
+      {id:'overhead_tri', name:'Overhead Tricep Ext',  unit:'lbs', thresholds:[0,25,40,60,80,100,130]},
+      {id:'skullcrusher', name:'Skull Crusher',        unit:'lbs', thresholds:[0,35,55,80,105,135,170]},
+      {id:'tri_kickback',  name:'Tricep Kickback',     unit:'lbs', thresholds:[0,15,25,35,50,65,80]},
+    ]
+  },
+  dos: {
+    label:'Dos', icon:'🦅',
+    exercises:[
+      {id:'lat_pulldown',  name:'Lat Pull Down',        unit:'lbs', thresholds:[0,55,85,120,155,195,245]},
+      {id:'cable_row',     name:'Cable Row',             unit:'lbs', thresholds:[0,55,90,130,165,210,265]},
+      {id:'db_row',        name:'Dumbbell Row',          unit:'lbs', thresholds:[0,35,55,80,105,135,170]},
+      {id:'pullup',        name:'Pull-up (poids corps)', unit:'reps',thresholds:[0,3,6,10,15,20,25]},
+      {id:'deadlift',      name:'Deadlift',              unit:'lbs', thresholds:[0,95,155,225,295,365,455]},
+    ]
+  },
+  epaules: {
+    label:'Épaules', icon:'🎯',
+    exercises:[
+      {id:'shoulder_press',name:'Shoulder Press',       unit:'lbs', thresholds:[0,45,75,110,145,185,235]},
+      {id:'db_shoulder',   name:'DB Shoulder Press',    unit:'lbs', thresholds:[0,25,40,60,80,100,130]},
+      {id:'lateral_raise', name:'Lateral Raise',        unit:'lbs', thresholds:[0,10,20,30,40,55,70]},
+      {id:'front_raise',   name:'Front Raise',          unit:'lbs', thresholds:[0,10,20,30,40,50,65]},
+      {id:'reverse_fly',   name:'Reverse Fly',          unit:'lbs', thresholds:[0,10,20,30,40,55,70]},
+      {id:'face_pull',     name:'Face Pull',             unit:'lbs', thresholds:[0,30,50,70,90,115,145]},
+    ]
+  },
+  jambes: {
+    label:'Jambes', icon:'🦵',
+    exercises:[
+      {id:'squat',         name:'Squat',                unit:'lbs', thresholds:[0,95,155,225,295,365,455]},
+      {id:'hack_squat',    name:'Hack Squat',           unit:'lbs', thresholds:[0,90,145,205,265,335,415]},
+      {id:'leg_press',     name:'Leg Press',            unit:'lbs', thresholds:[0,135,225,315,405,495,630]},
+      {id:'lunge',         name:'Fentes',               unit:'lbs', thresholds:[0,0,30,55,80,105,135]},
+      {id:'leg_curl',      name:'Leg Curl',             unit:'lbs', thresholds:[0,40,65,95,120,150,190]},
+      {id:'leg_ext',       name:'Leg Extension',        unit:'lbs', thresholds:[0,40,65,95,120,155,195]},
+      {id:'calf_raise',    name:'Mollet / Calf Raise',  unit:'lbs', thresholds:[0,65,105,155,205,265,335]},
+    ]
+  },
+  cardio: {
+    label:'Cardio', icon:'🏃',
+    exercises:[
+      {id:'sprint_dist',   name:'Sprint (mètres)',      unit:'m',   thresholds:[0,50,100,200,300,400,500]},
+      {id:'run_km',        name:'Course (km en 1 shot)',unit:'km',  thresholds:[0,1,3,5,10,15,21]},
+      {id:'treadmill_min', name:'Tapis roulant (min)',  unit:'min', thresholds:[0,10,20,30,45,60,90]},
+      {id:'bike_km',       name:'Vélo (km)',            unit:'km',  thresholds:[0,5,15,30,50,75,100]},
+      {id:'swim_lengths',  name:'Natation (longueurs)', unit:'x',   thresholds:[0,4,10,20,35,50,70]},
+      {id:'jump_rope',     name:'Corde à sauter (min)', unit:'min', thresholds:[0,2,5,10,15,20,30]},
+    ]
+  },
+};
+
+let currentGymGroup = 'poitrine';
+
+function getGymData() {
+  return JSON.parse(localStorage.getItem('gym-data-'+(currentUser?.uid||'')) || '{}');
+}
+function saveGymData(d) {
+  localStorage.setItem('gym-data-'+(currentUser?.uid||''), JSON.stringify(d));
+}
+
+function getRankForValue(thresholds, value) {
+  let rank = 0;
+  for (let i = thresholds.length - 1; i >= 0; i--) {
+    if (value >= thresholds[i]) { rank = i; break; }
+  }
+  return RANKS[Math.min(rank, RANKS.length-1)];
+}
+
+function getMuscleRank(groupKey) {
+  const group = GYM_GROUPS[groupKey];
+  const data = getGymData();
+  let totalRankIdx = 0, count = 0;
+  group.exercises.forEach(ex => {
+    const val = parseFloat(data[ex.id]?.value) || 0;
+    if (val > 0) {
+      const r = getRankForValue(ex.thresholds, val);
+      totalRankIdx += RANKS.findIndex(rr => rr.id === r.id);
+      count++;
+    }
+  });
+  if (!count) return RANKS[0];
+  return RANKS[Math.min(Math.round(totalRankIdx/count), RANKS.length-1)];
+}
+
+window.gymTab = function(groupKey, btn) {
+  currentGymGroup = groupKey;
+  document.querySelectorAll('#page-gym .tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  renderGymPage();
+};
+
+function renderGymPage() {
+  const group = GYM_GROUPS[currentGymGroup];
+  const data = getGymData();
+  const muscleRank = getMuscleRank(currentGymGroup);
+
+  // Update muscle rank card
+  const card = document.getElementById('gym-muscle-rank-card');
+  if (card) {
+    card.style.background = `linear-gradient(135deg, ${muscleRank.color}18, ${muscleRank.color}08)`;
+    card.style.borderColor = `${muscleRank.color}40`;
+  }
+  const ri = document.getElementById('gym-muscle-rank-icon'); if(ri) ri.textContent = muscleRank.icon;
+  const rl = document.getElementById('gym-muscle-rank-label');
+  if(rl) { rl.textContent = muscleRank.label; rl.style.color = muscleRank.color; }
+  const rs = document.getElementById('gym-muscle-rank-sub');
+  if(rs) { const filled = group.exercises.filter(ex=>(parseFloat(data[ex.id]?.value)||0)>0).length; rs.textContent = `${filled}/${group.exercises.length} exercices enregistrés`; }
+  const nameEl = card?.querySelector('div>div>div');
+  const rankTitle = document.querySelector('#gym-muscle-rank-card div > div > div:first-child');
+  if(rankTitle) rankTitle.textContent = `Rang global — ${group.label}`;
+
+  // Render exercises
+  const list = document.getElementById('gym-exercises-list');
+  if (!list) return;
+  list.innerHTML = group.exercises.map(ex => {
+    const saved = data[ex.id] || {};
+    const val = parseFloat(saved.value) || 0;
+    const rank = val > 0 ? getRankForValue(ex.thresholds, val) : null;
+    const nextRankIdx = rank ? Math.min(RANKS.findIndex(r=>r.id===rank.id)+1, RANKS.length-1) : 1;
+    const nextRank = RANKS[nextRankIdx];
+    const nextThreshold = ex.thresholds[nextRankIdx];
+    return `
+      <div style="background:var(--dark2);border:1px solid ${rank?rank.color+'30':'rgba(147,51,234,0.12)'};border-radius:14px;padding:14px;margin-bottom:10px;position:relative;overflow:hidden">
+        ${rank ? `<div style="position:absolute;top:0;left:0;right:0;height:3px;background:${rank.color};border-radius:14px 14px 0 0;opacity:0.6"></div>` : ''}
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+          <div>
+            <div style="font-size:14px;font-weight:700;color:var(--text)">${ex.name}</div>
+            <div style="font-size:10px;color:var(--text-muted);letter-spacing:1px;margin-top:2px">${ex.unit === 'lbs' ? '⚖️ Poids max' : ex.unit === 'reps' ? '🔁 Reps max' : ex.unit === 'km' ? '📍 Distance' : ex.unit === 'min' ? '⏱ Durée' : '📊 Score'}</div>
+          </div>
+          <div style="text-align:right">
+            ${rank ? `<div style="font-size:20px">${rank.icon}</div><div style="font-size:10px;font-weight:700;color:${rank.color};letter-spacing:1px">${rank.label}</div>` : '<div style="font-size:18px">🩶</div><div style="font-size:10px;color:var(--text-muted)">Non enregistré</div>'}
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+          <input type="number" id="gym-input-${ex.id}" value="${val||''}" placeholder="0 ${ex.unit}" step="${ex.unit==='km'?'0.1':'1'}" style="flex:1;background:var(--dark3);border:1px solid rgba(147,51,234,0.2);border-radius:10px;padding:9px 12px;color:var(--text);font-size:15px;font-family:'Rajdhani',sans-serif;outline:none">
+          <button onclick="saveGymRecord('${ex.id}','${currentGymGroup}')" style="background:linear-gradient(135deg,var(--mauve-dark),var(--rose-dark));color:#fff;border:none;border-radius:10px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Rajdhani',sans-serif;letter-spacing:1px;white-space:nowrap">💾 Save</button>
+        </div>
+        ${saved.note ? `<div style="font-size:11px;color:rgba(192,132,252,0.7);margin-bottom:6px;font-style:italic">📝 ${saved.note}</div>` : ''}
+        <input type="text" id="gym-note-${ex.id}" value="${saved.note||''}" placeholder="Note optionnelle..." style="width:100%;background:var(--dark3);border:1px solid rgba(147,51,234,0.15);border-radius:8px;padding:7px 10px;color:var(--text);font-size:12px;font-family:'Rajdhani',sans-serif;outline:none;margin-bottom:6px">
+        ${rank && nextRank && nextThreshold > val ? `
+          <div style="font-size:10px;color:var(--text-muted);letter-spacing:1px">Prochain rang: ${nextRank.icon} ${nextRank.label} à ${nextThreshold} ${ex.unit}</div>
+          <div style="height:4px;background:var(--dark3);border-radius:4px;margin-top:5px;overflow:hidden">
+            <div style="height:100%;border-radius:4px;background:${rank.color};width:${Math.min(100,(val/nextThreshold)*100).toFixed(1)}%;transition:width 0.5s ease"></div>
+          </div>` : rank && rank.id === 'mythic' ? `<div style="font-size:10px;color:var(--gold);letter-spacing:1px">🐉 Rang maximum atteint !</div>` : ''}
+      </div>`;
+  }).join('');
+
+  // Load free note
+  const noteEl = document.getElementById('gym-free-note');
+  if (noteEl) {
+    const notes = JSON.parse(localStorage.getItem('gym-notes-'+(currentUser?.uid||'')) || '{}');
+    noteEl.value = notes[currentGymGroup] || '';
+  }
+}
+
+window.saveGymRecord = function(exId, groupKey) {
+  const val = parseFloat(document.getElementById('gym-input-'+exId)?.value) || 0;
+  const note = document.getElementById('gym-note-'+exId)?.value || '';
+  const data = getGymData();
+  const prev = data[exId]?.value || 0;
+  data[exId] = { value: val, note, updatedAt: new Date().toISOString() };
+  saveGymData(data);
+  // Check PR
+  if (val > prev && prev > 0) showToast({icon:'🏆', name:'Nouveau PR ! '+val+' '+GYM_GROUPS[groupKey].exercises.find(e=>e.id===exId)?.unit});
+  renderGymPage();
+  checkNewTrophies();
+};
+
+window.saveGymNote = function() {
+  const noteEl = document.getElementById('gym-free-note');
+  if (!noteEl) return;
+  const notes = JSON.parse(localStorage.getItem('gym-notes-'+(currentUser?.uid||'')) || '{}');
+  notes[currentGymGroup] = noteEl.value;
+  localStorage.setItem('gym-notes-'+(currentUser?.uid||''), JSON.stringify(notes));
+  showToast({icon:'📝', name:'Note sauvegardée !'});
+};
+
+function getHighestGymRank() {
+  const allRanks = Object.keys(GYM_GROUPS).map(g => getMuscleRank(g));
+  let max = 0;
+  allRanks.forEach(r => { const idx = RANKS.findIndex(rr=>rr.id===r.id); if(idx>max) max=idx; });
+  return max;
 }
 
 // ===== TRACKER CHART & STATS =====
@@ -597,6 +829,7 @@ window.showPage = function(p,btn){
   if(p==='trophies') renderTrophies();
   if(p==='calendar') renderCalendar();
   if(p==='social'){renderLeaderboard();renderFriends();}
+  if(p==='gym') renderGymPage();
 };
 
 // ===== MODAL =====
@@ -953,6 +1186,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   <button class="nav-tab active" onclick="showPage('tracker',this)">⚔ Tracker</button>
   <button class="nav-tab" onclick="showPage('calendar',this)">📅 Calendrier</button>
   <button class="nav-tab" onclick="showPage('checkup',this)">✅ Checkup</button>
+  <button class="nav-tab" onclick="showPage('gym',this)">🏋️ Gym</button>
   <button class="nav-tab" onclick="showPage('social',this)">🤝 Social</button>
   <button class="nav-tab" onclick="showPage('trophies',this)">🏆 Trophées</button>
 </div>
@@ -1035,6 +1269,46 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <div style="margin:0 12px 14px;background:var(--dark2);border:1px solid rgba(147,51,234,0.12);border-radius:12px;padding:12px;text-align:center">
       <div style="font-size:10px;color:var(--text-muted);letter-spacing:1px">Ton rang mondial</div>
       <div style="font-size:28px;font-weight:700;color:var(--gold);text-shadow:0 0 10px rgba(251,191,36,0.5)" id="my-global-rank-display">#--</div>
+    </div>
+  </div>
+</div>
+
+<!-- GYM / RANKS PAGE -->
+<div class="page" id="page-gym">
+  <div class="section" style="padding-top:10px">
+    <div class="section-title">🏋️ Gym — Ranks & Records</div>
+  </div>
+
+  <!-- Muscle group tabs -->
+  <div class="tabs" style="padding-bottom:4px">
+    <button class="tab active" onclick="gymTab('poitrine',this)">🫁 Poitrine</button>
+    <button class="tab" onclick="gymTab('biceps',this)">💪 Biceps</button>
+    <button class="tab" onclick="gymTab('triceps',this)">⚡ Triceps</button>
+    <button class="tab" onclick="gymTab('dos',this)">🦅 Dos</button>
+    <button class="tab" onclick="gymTab('epaules',this)">🎯 Épaules</button>
+    <button class="tab" onclick="gymTab('jambes',this)">🦵 Jambes</button>
+    <button class="tab" onclick="gymTab('cardio',this)">🏃 Cardio</button>
+  </div>
+
+  <!-- Overall muscle rank card -->
+  <div id="gym-muscle-rank-card" style="margin:8px 12px;border-radius:16px;padding:14px;background:var(--dark2);border:1px solid rgba(147,51,234,0.2);display:flex;align-items:center;gap:12px;position:relative;z-index:1">
+    <div style="font-size:36px" id="gym-muscle-rank-icon">🩶</div>
+    <div>
+      <div style="font-size:11px;color:var(--text-muted);letter-spacing:2px;text-transform:uppercase">Rang global — Poitrine</div>
+      <div style="font-size:22px;font-weight:700;margin-top:2px" id="gym-muscle-rank-label">Bronze</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:2px" id="gym-muscle-rank-sub">Complète des exercices pour progresser</div>
+    </div>
+  </div>
+
+  <!-- Exercises list -->
+  <div id="gym-exercises-list" style="padding:0 12px 14px;position:relative;z-index:1"></div>
+
+  <!-- Free notes section -->
+  <div class="section">
+    <div class="section-title">📝 Notes libres</div>
+    <div style="background:var(--dark2);border:1px solid rgba(147,51,234,0.15);border-radius:14px;padding:14px">
+      <textarea id="gym-free-note" style="width:100%;background:var(--dark3);border:1px solid rgba(147,51,234,0.2);border-radius:10px;padding:10px 12px;color:var(--text);font-size:14px;font-family:'Rajdhani',sans-serif;outline:none;resize:none;height:90px;line-height:1.4" placeholder="Écris tes notes ici... objectifs, ressenti, programme..."></textarea>
+      <button onclick="saveGymNote()" style="margin-top:8px;width:100%;background:linear-gradient(135deg,var(--mauve-dark),var(--rose-dark));color:#fff;border:none;border-radius:10px;padding:11px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Rajdhani',sans-serif;letter-spacing:2px;text-transform:uppercase">💾 Sauvegarder</button>
     </div>
   </div>
 </div>
