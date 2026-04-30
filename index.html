@@ -1913,8 +1913,8 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <div class="auth-error" id="auth-error"></div>
     <input class="auth-input" type="email" id="auth-email" placeholder="Adresse email">
     <input class="auth-input" type="password" id="auth-pass" placeholder="Mot de passe (6 chars min)">
-    <button class="auth-btn auth-btn-main" id="auth-main-btn" onclick="doLogin()">⚔ Se connecter</button>
-    <button class="auth-btn auth-btn-sec" onclick="doLogin()">Mot de passe oublié ?</button>
+    <button class="auth-btn auth-btn-main" id="auth-main-btn">⚔ Se connecter</button>
+    <button class="auth-btn auth-btn-sec" id="auth-forgot-btn">Mot de passe oublié ?</button>
   </div>
 </div>
 
@@ -1926,7 +1926,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <div class="auth-title">⚔ Crée ton profil ⚔</div>
     <div class="auth-error" id="setup-error"></div>
     <input class="auth-input" type="text" id="setup-pseudo" placeholder="Ton pseudo unique (ex: Thor42)" maxlength="20">
-    <button class="auth-btn auth-btn-main" onclick="doSetupProfile()">🔱 Rejoindre l'arène</button>
+    <button class="auth-btn auth-btn-main" id="setup-main-btn">🔱 Rejoindre l'arène</button>
   </div>
 </div>
 
@@ -2370,8 +2370,12 @@ function switchAuthTab(tab) {
   const isLogin = tab === 'login';
   document.getElementById('tab-login').classList.toggle('active', isLogin);
   document.getElementById('tab-register').classList.toggle('active', !isLogin);
-  document.getElementById('auth-main-btn').textContent = isLogin ? '⚔ Se connecter' : '🔱 Créer mon compte';
-  document.getElementById('auth-main-btn').onclick = isLogin ? doLogin : doRegister;
+  const mainBtn = document.getElementById('auth-main-btn');
+  if(mainBtn) {
+    mainBtn.textContent = isLogin ? '⚔ Se connecter' : '🔱 Créer mon compte';
+    mainBtn.onclick = null;
+    mainBtn.addEventListener('click', isLogin ? doLogin : doRegister);
+  }
   document.getElementById('auth-error').textContent = '';
 }
 
@@ -2394,6 +2398,38 @@ function switchLbTab(tab) {
 document.addEventListener('DOMContentLoaded', () => {
   const fd = document.getElementById('f-date');
   if(fd) fd.value = new Date().toISOString().split('T')[0];
+
+  // ===== FIX: Attach all auth button events via JS (module scope fix) =====
+  const mainBtn = document.getElementById('auth-main-btn');
+  if(mainBtn) mainBtn.addEventListener('click', () => doLogin());
+
+  const forgotBtn = document.getElementById('auth-forgot-btn');
+  if(forgotBtn) forgotBtn.addEventListener('click', () => {
+    const email = document.getElementById('auth-email').value.trim();
+    if(!email){ document.getElementById('auth-error').textContent='Entre ton email d\'abord'; return; }
+    import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js').then(({sendPasswordResetEmail})=>{
+      sendPasswordResetEmail(auth, email).then(()=>{
+        document.getElementById('auth-error').style.color='#22c55e';
+        document.getElementById('auth-error').textContent='Email de réinitialisation envoyé !';
+      }).catch(()=>{ document.getElementById('auth-error').textContent='Email introuvable'; });
+    });
+  });
+
+  const tabLogin = document.getElementById('tab-login');
+  const tabRegister = document.getElementById('tab-register');
+  if(tabLogin) tabLogin.addEventListener('click', () => switchAuthTab('login'));
+  if(tabRegister) tabRegister.addEventListener('click', () => switchAuthTab('register'));
+
+  const setupBtn = document.getElementById('setup-main-btn');
+  if(setupBtn) setupBtn.addEventListener('click', () => doSetupProfile());
+
+  // Allow Enter key to submit login
+  const authPass = document.getElementById('auth-pass');
+  if(authPass) authPass.addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+  const authEmail = document.getElementById('auth-email');
+  if(authEmail) authEmail.addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+  const setupPseudo = document.getElementById('setup-pseudo');
+  if(setupPseudo) setupPseudo.addEventListener('keydown', e => { if(e.key==='Enter') doSetupProfile(); });
 });
 </script>
 </body>
