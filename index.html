@@ -611,6 +611,14 @@ function getStreak(e) {
   return streak;
 }
 
+window._trophyFilter = 'all';
+window.filterTrophies = function(filter, btn) {
+  window._trophyFilter = filter;
+  document.querySelectorAll('#page-trophies .tab').forEach(t=>t.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  renderTrophies();
+};
+
 function renderTrophies() {
   const grid = document.getElementById('trophies-grid'); if(!grid) return;
   const unlocked = TROPHIES.filter(t=>t.check(entries));
@@ -619,9 +627,37 @@ function renderTrophies() {
   const fill = document.getElementById('trophy-fill'); if(fill) fill.style.width=(count/total*100)+'%';
   const ct = document.getElementById('trophy-count-text'); if(ct) ct.textContent=count+' / '+total+' trophées débloqués';
   const st = document.getElementById('trophy-subtitle'); if(st) st.textContent=count===0?'Commence à t\'entraîner !':count<5?'Tu gagnes ta légende...':count<15?'Les dieux t\'observent !':'Tu es une véritable légende !';
-  grid.innerHTML = TROPHIES.map(t=>{
+
+  const f = window._trophyFilter || 'all';
+  let list = TROPHIES;
+  if(f==='unlocked') list = TROPHIES.filter(t=>uIds.includes(t.id));
+  else if(f==='locked') list = TROPHIES.filter(t=>!uIds.includes(t.id));
+  else if(f==='legendary') list = TROPHIES.filter(t=>t.rarity==='legendary');
+  else if(f==='epic') list = TROPHIES.filter(t=>t.rarity==='epic');
+
+  // Sort: unlocked first, then by rarity
+  const rarityOrder = {legendary:0, epic:1, rare:2, common:3};
+  list = [...list].sort((a,b)=>{
+    const au = uIds.includes(a.id), bu = uIds.includes(b.id);
+    if(au && !bu) return -1;
+    if(!au && bu) return 1;
+    return rarityOrder[a.rarity] - rarityOrder[b.rarity];
+  });
+
+  const rarityLabel = {common:'Commun', rare:'Rare', epic:'Épique', legendary:'Légendaire'};
+  if(!list.length) { grid.innerHTML='<div class="empty">Aucun trophée dans ce filtre</div>'; return; }
+  grid.innerHTML = list.map(t=>{
     const u = uIds.includes(t.id);
-    return`<div class="trophy-card ${u?'unlocked':'locked'}">${u?'<div class="trophy-badge">★</div>':'<div class="trophy-lock">🔒</div>'}<span class="trophy-icon">${t.icon}</span><div class="trophy-name">${t.name}</div><div class="trophy-desc">${t.desc}</div><div class="trophy-rarity rarity-${t.rarity}">${t.rarity}</div></div>`;
+    return `<div class="trophy-card ${u?'unlocked':'locked'}">
+      ${u?'<div class="trophy-badge">✅</div>':''}
+      <span class="trophy-icon">${t.icon}</span>
+      <div class="trophy-info">
+        <div class="trophy-name">${t.name}</div>
+        <div class="trophy-desc">${t.desc}</div>
+        <div class="trophy-how">${u?'✔ Débloqué !':'🔒 '+t.desc}</div>
+        <span class="trophy-rarity rarity-${t.rarity}">${rarityLabel[t.rarity]||t.rarity}</span>
+      </div>
+    </div>`;
   }).join('');
 }
 
@@ -1737,19 +1773,21 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .trophy-count-bar{margin:8px 12px;background:var(--dark3);border-radius:10px;height:6px;overflow:hidden;position:relative;z-index:1;border:1px solid rgba(251,191,36,0.2)}
 .trophy-count-fill{height:100%;background:linear-gradient(90deg,var(--mauve),var(--gold));border-radius:10px;transition:width 0.8s ease}
 .trophy-count-text{font-size:10px;color:var(--gold);letter-spacing:2px;text-align:center;margin:4px 0 10px;position:relative;z-index:1}
-.trophies-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 12px 14px;position:relative;z-index:1}
-.trophy-card{border-radius:14px;padding:12px 10px;border:1px solid rgba(147,51,234,0.15);background:var(--dark2);position:relative;overflow:hidden;text-align:center}
-.trophy-card.unlocked{background:linear-gradient(145deg,#12002a,#250050);border-color:rgba(251,191,36,0.3);box-shadow:0 4px 16px rgba(251,191,36,0.15)}
-.trophy-card.unlocked::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(251,191,36,0.08),transparent)}
-.trophy-card.locked{opacity:0.4;filter:grayscale(0.7)}
-.trophy-icon{font-size:28px;margin-bottom:5px;display:block;line-height:1}
-.trophy-name{font-family:'Cinzel Decorative',serif;font-size:8px;letter-spacing:1px;color:var(--gold-light);margin-bottom:3px;line-height:1.3}
+.trophies-grid{display:flex;flex-direction:column;gap:8px;padding:0 12px 14px;position:relative;z-index:1}
+.trophy-card{border-radius:14px;padding:13px 14px;border:1px solid rgba(147,51,234,0.15);background:var(--dark2);position:relative;overflow:hidden;display:flex;align-items:center;gap:12px}
+.trophy-card.unlocked{background:linear-gradient(135deg,#12002a,#250050);border-color:rgba(251,191,36,0.3);box-shadow:0 4px 16px rgba(251,191,36,0.1)}
+.trophy-card.unlocked::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 80% at 0% 50%,rgba(251,191,36,0.07),transparent)}
+.trophy-card.locked{opacity:0.45;filter:grayscale(0.6)}
+.trophy-icon{font-size:32px;flex-shrink:0;width:42px;text-align:center;line-height:1}
+.trophy-info{flex:1;min-width:0}
+.trophy-name{font-family:'Cinzel Decorative',serif;font-size:9px;letter-spacing:0.5px;color:var(--gold-light);margin-bottom:3px;line-height:1.3}
 .trophy-card.locked .trophy-name{color:var(--text-muted)}
-.trophy-desc{font-size:9px;color:var(--text-muted);line-height:1.4}
-.trophy-card.unlocked .trophy-desc{color:rgba(240,230,255,0.6)}
-.trophy-badge{position:absolute;top:6px;right:6px;width:16px;height:16px;background:linear-gradient(135deg,var(--gold),#f59e0b);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px}
-.trophy-lock{position:absolute;top:6px;right:6px;font-size:11px;opacity:0.4}
-.trophy-rarity{font-size:8px;letter-spacing:2px;text-transform:uppercase;margin-top:4px;font-weight:700}
+.trophy-desc{font-size:11px;color:rgba(192,132,252,0.75);line-height:1.4;margin-bottom:3px}
+.trophy-card.locked .trophy-desc{color:var(--text-muted)}
+.trophy-how{font-size:10px;color:var(--text-muted);line-height:1.4;font-style:italic}
+.trophy-card.unlocked .trophy-how{color:rgba(34,197,94,0.8)}
+.trophy-badge{position:absolute;top:8px;right:8px;font-size:14px}
+.trophy-rarity{font-size:8px;letter-spacing:2px;text-transform:uppercase;font-weight:700;margin-top:2px;display:inline-block}
 .rarity-common{color:#94a3b8}.rarity-rare{color:#60a5fa}.rarity-epic{color:var(--mauve-light)}.rarity-legendary{color:var(--gold);text-shadow:0 0 8px rgba(251,191,36,0.6)}
 
 .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#1a0040,#3d0030);border:1px solid var(--gold);border-radius:14px;padding:12px 18px;z-index:999;text-align:center;box-shadow:0 8px 30px rgba(251,191,36,0.3);animation:toastIn 0.4s ease,toastOut 0.4s ease 2.6s forwards;min-width:220px}
@@ -2098,6 +2136,13 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   <div class="trophy-header"><div class="trophy-header-title">✦ Hall of Glory ✦</div><div class="trophy-subtitle" id="trophy-subtitle">Accomplis des séances pour débloquer</div></div>
   <div class="trophy-count-bar"><div class="trophy-count-fill" id="trophy-fill" style="width:0%"></div></div>
   <div class="trophy-count-text" id="trophy-count-text">0 / 74 trophées</div>
+  <div class="tabs" style="padding:4px 12px 8px">
+    <button class="tab active" onclick="filterTrophies('all',this)">Tous</button>
+    <button class="tab" onclick="filterTrophies('unlocked',this)">✅ Débloqués</button>
+    <button class="tab" onclick="filterTrophies('locked',this)">🔒 À débloquer</button>
+    <button class="tab" onclick="filterTrophies('legendary',this)">👑 Légendaires</button>
+    <button class="tab" onclick="filterTrophies('epic',this)">💜 Épiques</button>
+  </div>
   <div class="trophies-grid" id="trophies-grid"></div>
 </div>
 
