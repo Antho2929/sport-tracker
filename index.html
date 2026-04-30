@@ -353,14 +353,15 @@ function renderCalendar() {
     const ds = calYear+'-'+String(calMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
     const daySessions = entries.filter(e => e.date === ds);
     const cell = document.createElement('div');
-    cell.className = 'cal-cell' + (ds===todayStr?' today':'') + (daySessions.length>0?' has-session':'');
+    cell.className = 'cal-cell clickable' + (ds===todayStr?' today':'') + (daySessions.length>0?' has-session':'');
     if (daySessions.length > 0) {
       if (daySessions.some(e=>e.type==='Musculation')) cell.classList.add('muscu');
       else if (daySessions.some(e=>['Course à pied','Vélo','Natation'].includes(e.type))) cell.classList.add('cardio');
       const dot = document.createElement('div'); dot.className = 'cal-cell-dot'; cell.appendChild(dot);
     }
-    cell.textContent = d;
-    if (daySessions.length) cell.onclick = () => showCalDetail(ds, daySessions);
+    const num = document.createElement('span'); num.textContent = d; cell.appendChild(num);
+    // Every day clickable — shows sessions + add button
+    cell.onclick = () => showCalDetail(ds, daySessions);
     grid.appendChild(cell);
   }
   const remaining = (7-((firstDay+daysInMonth)%7))%7;
@@ -374,17 +375,31 @@ function showCalDetail(ds, sessions) {
   const detail = document.getElementById('cal-detail');
   const title = document.getElementById('cal-detail-title');
   const list = document.getElementById('cal-detail-sessions');
-  if (!sessions.length) { detail?.classList.remove('show'); return; }
   const parts = ds.split('-');
-  title.textContent = parseInt(parts[2]) + ' ' + months[parseInt(parts[1])-1] + ' ' + parts[0];
-  list.innerHTML = sessions.map(e => `
+  const dateLabel = parseInt(parts[2]) + ' ' + months[parseInt(parts[1])-1] + ' ' + parts[0];
+  title.textContent = dateLabel;
+  list.innerHTML = (sessions.length === 0
+    ? '<div style="color:var(--text-muted);font-size:12px;text-align:center;padding:8px 0">Aucune séance ce jour</div>'
+    : sessions.map(e => `
     <div class="cal-session-item">
-      <div class="cal-session-type">${e.type}${e.muscles?' — '+e.muscles:''}</div>
-      <div class="cal-session-info">${e.duree?e.duree+' min':''} ${e.cal?'· '+e.cal+' kcal':''} ${e.km?'· '+e.km+' km':''} ${e.exercise?'· '+e.exercise:''} ${e.weightSets?'· '+e.weightSets:''}</div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div class="cal-session-type">${e.type}${e.muscles?' — <span style="color:var(--mauve-light);font-size:11px">'+e.muscles+'</span>':''}</div>
+        <span onclick="deleteEntry('${e.id}')" style="font-size:11px;cursor:pointer;color:var(--text-muted);flex-shrink:0;margin-left:8px">🗑</span>
+      </div>
+      <div class="cal-session-info">${e.duree?e.duree+' min':''} ${e.cal?'· '+e.cal+' kcal':''} ${e.km?'· '+e.km+' km':''} ${e.bpm?'· '+e.bpm+' bpm':''} ${e.exercise?'· '+e.exercise:''}</div>
       ${e.note?`<div class="cal-session-note">📝 ${e.note}</div>`:''}
-    </div>`).join('');
+    </div>`).join(''))
+  + `<button onclick="openModalOnDate('${ds}')" style="width:100%;margin-top:10px;background:linear-gradient(135deg,var(--mauve-dark),var(--rose-dark));color:#fff;border:none;border-radius:10px;padding:11px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Rajdhani',sans-serif;letter-spacing:2px;text-transform:uppercase">+ Ajouter une séance ce jour</button>`;
   detail?.classList.add('show');
 }
+
+window.openModalOnDate = function(ds) {
+  openModal();
+  setTimeout(() => {
+    const fd = document.getElementById('f-date');
+    if(fd) fd.value = ds;
+  }, 50);
+};
 
 window.calPrev = function() { calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderCalendar(); };
 window.calNext = function() { calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderCalendar(); };
@@ -531,37 +546,37 @@ const TROPHIES = [
   {id:'squat225',icon:'🦵',name:'Squat Machine',desc:'225 lbs au squat',rarity:'epic',check:e=>e.some(x=>x.type==='Musculation'&&(x.exercise||'').toLowerCase().includes('squat')&&(x.weight||0)>=225)},
   {id:'shoulder50',icon:'🎯',name:'Épaules d\'Acier',desc:'50 lbs shoulder press',rarity:'rare',check:e=>e.some(x=>x.type==='Musculation'&&(x.exercise||'').toLowerCase().includes('shoulder')&&(x.weight||0)>=50)},
   {id:'deadlift300',icon:'⛓️',name:'Roi du Deadlift',desc:'300 lbs au deadlift',rarity:'epic',check:e=>e.some(x=>x.type==='Musculation'&&(x.exercise||'').toLowerCase().includes('deadlift')&&(x.weight||0)>=300)},
-  {id:'muscu20',icon:'💪',name:'Arès',desc:'20 séances de muscu',rarity:'legendary',check:e=>e.filter(x=>x.type==='Musculation').length>=20},
+  {id:'muscu20',icon:'💪',name:'Arès',desc:'20 séances de muscu',rarity:'epic',check:e=>e.filter(x=>x.type==='Musculation').length>=20},
   {id:'muscu50',icon:'🔱',name:'Titan du Fer',desc:'50 séances de muscu',rarity:'legendary',check:e=>e.filter(x=>x.type==='Musculation').length>=50},
-  {id:'hercule',icon:'💪',name:'Hercule',desc:'5 jours consécutifs',rarity:'epic',check:e=>getStreak(e)>=5},
-  {id:'zeus',icon:'⚡',name:'Zeus',desc:'7 jours consécutifs',rarity:'legendary',check:e=>getStreak(e)>=7},
+  {id:'hercule',icon:'💪',name:'Hercule',desc:'5 jours consécutifs',rarity:'rare',check:e=>getStreak(e)>=5},
+  {id:'zeus',icon:'⚡',name:'Zeus',desc:'7 jours consécutifs',rarity:'epic',check:e=>getStreak(e)>=7},
   {id:'zeus_km',icon:'🏃',name:'Zeus du Sprint',desc:'1 km/jour - 7 jours',rarity:'rare',check:e=>{for(let i=0;i<7;i++){const d=new Date();d.setDate(d.getDate()-i);if(!e.filter(x=>x.date===d.toISOString().split('T')[0]).some(x=>(x.km||0)>=1))return false;}return e.length>0;}},
   {id:'apollo',icon:'☀️',name:'Apollon',desc:'10 séances de course',rarity:'rare',check:e=>e.filter(x=>x.type==='Course à pied').length>=10},
   {id:'poseidon',icon:'🔱',name:'Poséidon',desc:'5 séances de natation',rarity:'rare',check:e=>e.filter(x=>x.type==='Natation').length>=5},
-  {id:'athena',icon:'🦉',name:'Athéna',desc:'30 séances au total',rarity:'epic',check:e=>e.length>=30},
-  {id:'hades',icon:'💀',name:'Hadès',desc:'5000 kcal totales',rarity:'epic',check:e=>e.reduce((s,x)=>s+(x.cal||0),0)>=5000},
+  {id:'athena',icon:'🦉',name:'Athéna',desc:'30 séances au total',rarity:'rare',check:e=>e.length>=30},
+  {id:'hades',icon:'💀',name:'Hadès',desc:'5000 kcal totales',rarity:'rare',check:e=>e.reduce((s,x)=>s+(x.cal||0),0)>=5000},
   {id:'hermes',icon:'🪶',name:'Hermès',desc:'100 km parcourus',rarity:'legendary',check:e=>e.reduce((s,x)=>s+(x.km||0),0)>=100},
-  {id:'titan',icon:'🌋',name:'Titan',desc:'Séance de 2h ou plus',rarity:'epic',check:e=>e.some(x=>x.duree>=120)},
+  {id:'titan',icon:'🌋',name:'Titan',desc:'Séance de 2h ou plus',rarity:'rare',check:e=>e.some(x=>x.duree>=120)},
   {id:'odin',icon:'🐦‍⬛',name:'Odin',desc:'50 séances totales',rarity:'legendary',check:e=>e.length>=50},
-  {id:'thor',icon:'🔨',name:'Thor',desc:'10 muscu en un mois',rarity:'epic',check:e=>{const m=new Date().toISOString().slice(0,7);return e.filter(x=>x.type==='Musculation'&&x.date.startsWith(m)).length>=10;}},
+  {id:'thor',icon:'🔨',name:'Thor',desc:'10 muscu en un mois',rarity:'rare',check:e=>{const m=new Date().toISOString().slice(0,7);return e.filter(x=>x.type==='Musculation'&&x.date.startsWith(m)).length>=10;}},
   {id:'valkyrie',icon:'⚔️',name:'Valkyrie',desc:'3 séances en un jour',rarity:'rare',check:e=>{const c={};e.forEach(x=>{c[x.date]=(c[x.date]||0)+1;});return Object.values(c).some(v=>v>=3);}},
-  {id:'berserker',icon:'🐺',name:'Berserker',desc:'Fréquence à 200 bpm',rarity:'epic',check:e=>e.some(x=>x.bpm>=200)},
+  {id:'berserker',icon:'🐺',name:'Berserker',desc:'Fréquence à 200 bpm',rarity:'rare',check:e=>e.some(x=>x.bpm>=200)},
   {id:'ragnarok',icon:'🌩️',name:'Ragnarök',desc:'20 000 kcal totales',rarity:'legendary',check:e=>e.reduce((s,x)=>s+(x.cal||0),0)>=20000},
-  {id:'skald',icon:'📜',name:'Skald',desc:'6 types de sports',rarity:'rare',check:e=>new Set(e.map(x=>x.type)).size>=6},
-  {id:'sorcier',icon:'🔮',name:'Super Sorcier',desc:'7 types de sports',rarity:'epic',check:e=>new Set(e.map(x=>x.type)).size>=7},
+  {id:'skald',icon:'📜',name:'Skald',desc:'6 types de sports',rarity:'common',check:e=>new Set(e.map(x=>x.type)).size>=6},
+  {id:'sorcier',icon:'🔮',name:'Super Sorcier',desc:'7 types de sports',rarity:'rare',check:e=>new Set(e.map(x=>x.type)).size>=7},
   {id:'arcane',icon:'✨',name:'Arcane Suprême',desc:'100 séances totales',rarity:'legendary',check:e=>e.length>=100},
   {id:'rune',icon:'ᚱ',name:'Maître des Runes',desc:'Tous les types de sport',rarity:'rare',check:e=>['Course à pied','Vélo','Natation','Musculation','Escalade','Yoga','Boxe'].every(t=>e.some(x=>x.type===t))},
-  {id:'olympe',icon:'⛰️',name:'Sommet Olympe',desc:'Randonnée de 20 km',rarity:'epic',check:e=>e.some(x=>x.type==='Randonnée'&&x.km>=20)},
-  {id:'atlas',icon:'🌍',name:'Atlas',desc:'500 km parcourus',rarity:'epic',check:e=>e.reduce((s,x)=>s+(x.km||0),0)>=500},
-  {id:'daily7',icon:'🌟',name:'Semaine Parfaite',desc:'7 check-ups de suite',rarity:'legendary',check:e=>getDailyStreak(getCheckData())>=7},
+  {id:'olympe',icon:'⛰️',name:'Sommet Olympe',desc:'Randonnée de 20 km',rarity:'rare',check:e=>e.some(x=>x.type==='Randonnée'&&x.km>=20)},
+  {id:'atlas',icon:'🌍',name:'Atlas',desc:'500 km parcourus',rarity:'legendary',check:e=>e.reduce((s,x)=>s+(x.km||0),0)>=500},
+  {id:'daily7',icon:'🌟',name:'Semaine Parfaite',desc:'7 check-ups de suite',rarity:'epic',check:e=>getDailyStreak(getCheckData())>=7},
   {id:'journalist',icon:'📓',name:'Chroniqueur',desc:'10 notes de séance',rarity:'common',check:e=>e.filter(x=>x.note&&x.note.length>5).length>=10},
   {id:'social',icon:'🤝',name:'Guerrier Social',desc:'Ajoute ton 1er ami',rarity:'common',check:e=>(window._userProfile?.friends||[]).length>=1},
   {id:'social5',icon:'⚔️',name:'Chef de Clan',desc:'5 amis dans ta liste',rarity:'rare',check:e=>(window._userProfile?.friends||[]).length>=5},
-  {id:'friends_top1',icon:'👑',name:'Roi du Clan',desc:'#1 dans le classement amis',rarity:'epic',check:e=>window._myFriendsRank===1},
+  {id:'friends_top1',icon:'👑',name:'Roi du Clan',desc:'#1 dans le classement amis',rarity:'rare',check:e=>window._myFriendsRank===1},
   {id:'friends_top3',icon:'🏅',name:'Guerrier d\'Élite',desc:'Top 3 dans le classement amis',rarity:'rare',check:e=>window._myFriendsRank<=3&&window._myFriendsRank>0},
   {id:'friends_top1_x3',icon:'🔱',name:'Seigneur du Clan',desc:'#1 amis 3 fois',rarity:'epic',check:e=>(window._userProfile?.friendsWins||0)>=3},
   {id:'friends_top1_x5',icon:'⚡',name:'Légende du Clan',desc:'#1 amis 5 fois',rarity:'legendary',check:e=>(window._userProfile?.friendsWins||0)>=5},
-  {id:'global_top10',icon:'🌍',name:'Conquérant',desc:'Top 10 mondial',rarity:'rare',check:e=>window._myGlobalRank<=10&&window._myGlobalRank>0},
+  {id:'global_top10',icon:'🌍',name:'Conquérant',desc:'Top 10 mondial',rarity:'epic',check:e=>window._myGlobalRank<=10&&window._myGlobalRank>0},
   {id:'global_top3',icon:'🌟',name:'Demi-Dieu',desc:'Top 3 mondial',rarity:'epic',check:e=>window._myGlobalRank<=3&&window._myGlobalRank>0},
   {id:'global_top1',icon:'🐉',name:'Dieu Suprême',desc:'#1 mondial',rarity:'legendary',check:e=>window._myGlobalRank===1},
   {id:'global_top1_x3',icon:'🌩️',name:'Zeus Éternel',desc:'#1 mondial 3 fois',rarity:'legendary',check:e=>(window._userProfile?.globalWins||0)>=3},
@@ -569,7 +584,7 @@ const TROPHIES = [
   {id:'rank_argent',icon:'⚪',name:'Guerrier d\'Argent',desc:'Atteins le rang Argent dans un exercice',rarity:'common',check:e=>getHighestGymRank()>=1},
   {id:'rank_or',icon:'🟡',name:'Guerrier d\'Or',desc:'Atteins le rang Or dans un exercice',rarity:'rare',check:e=>getHighestGymRank()>=2},
   {id:'rank_diamant',icon:'💎',name:'Guerrier Diamant',desc:'Atteins le rang Diamant dans un exercice',rarity:'epic',check:e=>getHighestGymRank()>=3},
-  {id:'rank_maitre',icon:'💜',name:'Maître Guerrier',desc:'Atteins le rang Maître dans un exercice',rarity:'epic',check:e=>getHighestGymRank()>=4},
+  {id:'rank_maitre',icon:'💜',name:'Maître Guerrier',desc:'Atteins le rang Maître dans un exercice',rarity:'rare',check:e=>getHighestGymRank()>=4},
   {id:'rank_legend',icon:'👑',name:'Guerrier Légendaire',desc:'Atteins le rang Légendaire dans un exercice',rarity:'legendary',check:e=>getHighestGymRank()>=5},
   {id:'rank_mythic',icon:'🐉',name:'Être Mythique',desc:'Atteins le rang Mythique',rarity:'legendary',check:e=>getHighestGymRank()>=6},
   {id:'rank_bench225',icon:'🏋️',name:'Club 225 Certifié',desc:'Rang Or+ au Bench Press',rarity:'epic',check:e=>{const d=getGymData();return(parseFloat(d['bench']?.value)||0)>=175;}},
@@ -587,13 +602,13 @@ const TROPHIES = [
   {id:'lvl20',icon:'💫',name:'Niveau 20',desc:'Atteins le niveau 20',rarity:'epic',check:e=>getLevel(getTotalXP(e)).level>=20},
   {id:'lvl50',icon:'🌌',name:'Niveau 50',desc:'Atteins le niveau 50',rarity:'legendary',check:e=>getLevel(getTotalXP(e)).level>=50},
   {id:'xp1000',icon:'✨',name:'1000 XP',desc:'Accumule 1000 XP',rarity:'common',check:e=>getTotalXP(e)>=1000},
-  {id:'xp10000',icon:'💎',name:'10 000 XP',desc:'Accumule 10 000 XP',rarity:'epic',check:e=>getTotalXP(e)>=10000},
+  {id:'xp10000',icon:'💎',name:'10 000 XP',desc:'Accumule 10 000 XP',rarity:'rare',check:e=>getTotalXP(e)>=10000},
   {id:'nutri1',icon:'🥗',name:'Conscient',desc:'Enregistre 7 repas',rarity:'common',check:e=>getNutritionCount()>=7},
   {id:'nutri2',icon:'🥦',name:'Nutritionniste',desc:'Enregistre 30 repas',rarity:'rare',check:e=>getNutritionCount()>=30},
   {id:'deficit',icon:'🔥',name:'En Déficit',desc:'Déficit calorique 7j',rarity:'rare',check:e=>getNutritionStreak()>=7},
   {id:'weight1',icon:'⚖️',name:'Premier Pesée',desc:'Enregistre ton poids',rarity:'common',check:e=>getWeightCount()>=1},
   {id:'weight10',icon:'📉',name:'Suivi Assidu',desc:'10 pesées enregistrées',rarity:'rare',check:e=>getWeightCount()>=10},
-  {id:'rank_gen_or',icon:'🟡',name:'Rang Or Général',desc:'Rang général Or',rarity:'rare',check:e=>getOverallRankIdx()>=2},
+  {id:'rank_gen_or',icon:'🟡',name:'Rang Or Général',desc:'Rang général Or',rarity:'common',check:e=>getOverallRankIdx()>=2},
   {id:'rank_gen_diamond',icon:'💎',name:'Rang Diamant Général',desc:'Rang général Diamant',rarity:'epic',check:e=>getOverallRankIdx()>=3},
   {id:'rank_gen_legend',icon:'👑',name:'Rang Légendaire Gén.',desc:'Rang général Légendaire',rarity:'legendary',check:e=>getOverallRankIdx()>=5},
 ];
@@ -611,14 +626,6 @@ function getStreak(e) {
   return streak;
 }
 
-window._trophyFilter = 'all';
-window.filterTrophies = function(filter, btn) {
-  window._trophyFilter = filter;
-  document.querySelectorAll('#page-trophies .tab').forEach(t=>t.classList.remove('active'));
-  if(btn) btn.classList.add('active');
-  renderTrophies();
-};
-
 function renderTrophies() {
   const grid = document.getElementById('trophies-grid'); if(!grid) return;
   const unlocked = TROPHIES.filter(t=>t.check(entries));
@@ -626,37 +633,27 @@ function renderTrophies() {
   const count = unlocked.length, total = TROPHIES.length;
   const fill = document.getElementById('trophy-fill'); if(fill) fill.style.width=(count/total*100)+'%';
   const ct = document.getElementById('trophy-count-text'); if(ct) ct.textContent=count+' / '+total+' trophées débloqués';
-  const st = document.getElementById('trophy-subtitle'); if(st) st.textContent=count===0?'Commence à t\'entraîner !':count<5?'Tu gagnes ta légende...':count<15?'Les dieux t\'observent !':'Tu es une véritable légende !';
+  const st = document.getElementById('trophy-subtitle'); if(st) st.textContent=count===0?'Commence à t\'entraîner !':count<5?'Tu gagnes ta légende...':count<15?'Les dieux t\'observent !':count<30?'Tu es sur le chemin des dieux !':'Tu es une véritable légende !';
 
-  const f = window._trophyFilter || 'all';
-  let list = TROPHIES;
-  if(f==='unlocked') list = TROPHIES.filter(t=>uIds.includes(t.id));
-  else if(f==='locked') list = TROPHIES.filter(t=>!uIds.includes(t.id));
-  else if(f==='legendary') list = TROPHIES.filter(t=>t.rarity==='legendary');
-  else if(f==='epic') list = TROPHIES.filter(t=>t.rarity==='epic');
-
-  // Sort: unlocked first, then by rarity
   const rarityOrder = {legendary:0, epic:1, rare:2, common:3};
-  list = [...list].sort((a,b)=>{
+  const rarityLabel = {common:'Commun', rare:'Rare', epic:'Épique', legendary:'Légendaire'};
+
+  // Sort: unlocked first (by rarity), then locked (by rarity)
+  const sorted = [...TROPHIES].sort((a,b)=>{
     const au = uIds.includes(a.id), bu = uIds.includes(b.id);
     if(au && !bu) return -1;
     if(!au && bu) return 1;
     return rarityOrder[a.rarity] - rarityOrder[b.rarity];
   });
 
-  const rarityLabel = {common:'Commun', rare:'Rare', epic:'Épique', legendary:'Légendaire'};
-  if(!list.length) { grid.innerHTML='<div class="empty">Aucun trophée dans ce filtre</div>'; return; }
-  grid.innerHTML = list.map(t=>{
+  grid.innerHTML = sorted.map(t=>{
     const u = uIds.includes(t.id);
     return `<div class="trophy-card ${u?'unlocked':'locked'}">
       ${u?'<div class="trophy-badge">✅</div>':''}
       <span class="trophy-icon">${t.icon}</span>
-      <div class="trophy-info">
-        <div class="trophy-name">${t.name}</div>
-        <div class="trophy-desc">${t.desc}</div>
-        <div class="trophy-how">${u?'✔ Débloqué !':'🔒 '+t.desc}</div>
-        <span class="trophy-rarity rarity-${t.rarity}">${rarityLabel[t.rarity]||t.rarity}</span>
-      </div>
+      <div class="trophy-name">${t.name}</div>
+      <div class="trophy-desc">${t.desc}</div>
+      <span class="trophy-rarity rarity-${t.rarity}">${rarityLabel[t.rarity]||t.rarity}</span>
     </div>`;
   }).join('');
 }
@@ -803,15 +800,16 @@ function getMuscleRank(groupKey) {
   const data = getGymData();
   let totalRankIdx = 0, count = 0;
   group.exercises.forEach(ex => {
-    const val = parseFloat(data[ex.id]?.value) || 0;
-    if (val > 0) {
+    const saved = data[ex.id];
+    const effective = getEffectiveValue(saved, ex);
+    if (effective > 0) {
       const thresholds = getThresholds(ex);
-      const r = getRankForValue(thresholds, val);
+      const r = getRankForValue(thresholds, effective);
       totalRankIdx += RANKS.findIndex(rr => rr.id === r.id);
       count++;
     }
   });
-  if (!count) return RANKS[0];
+  if (!count) return RANKS[0]; // No entries = no rank shown (Bronze by default)
   return RANKS[Math.min(Math.round(totalRankIdx/count), RANKS.length-1)];
 }
 
@@ -838,7 +836,17 @@ window.gymTab = function(groupKey, btn) {
   renderGymPage();
 };
 
-// ===== renderGymPage — single, clean definition =====
+// ===== renderGymPage =====
+function getEffectiveValue(saved, ex) {
+  // Combine weight + reps into an effective score for ranking
+  // Uses Epley formula approximation: effective = weight × (1 + reps/30)
+  const val = parseFloat(saved?.value) || 0;
+  const reps = parseInt(saved?.reps) || 1;
+  if (!val) return 0;
+  if (ex.unit === 'lbs' && reps > 1) return Math.round(val * (1 + reps / 30));
+  return val;
+}
+
 function renderGymPage() {
   const group = GYM_GROUPS[currentGymGroup];
   const data = getGymData();
@@ -846,6 +854,7 @@ function renderGymPage() {
   const overallRank = getOverallRank();
   const lvlData = getLevel(getTotalXP(entries));
 
+  // Overall rank card
   const oc = document.getElementById('gym-overall-card');
   if(oc) { oc.style.borderColor=overallRank.color+'40'; oc.style.background=`linear-gradient(135deg,${overallRank.color}12,${overallRank.color}05)`; }
   const oi = document.getElementById('gym-overall-icon'); if(oi) oi.textContent=overallRank.icon;
@@ -853,6 +862,7 @@ function renderGymPage() {
   const ld = document.getElementById('gym-level-display'); if(ld){ld.textContent=lvlData.icon+' Niv.'+lvlData.level;}
   const xd = document.getElementById('gym-xp-display'); if(xd) xd.textContent=getTotalXP(entries).toLocaleString()+' XP';
 
+  // Group rank card
   const card = document.getElementById('gym-muscle-rank-card');
   if (card) {
     card.style.background = `linear-gradient(135deg, ${muscleRank.color}18, ${muscleRank.color}08)`;
@@ -864,11 +874,12 @@ function renderGymPage() {
   const rs = document.getElementById('gym-muscle-rank-sub');
   if(rs) {
     const filled = group.exercises.filter(ex=>(parseFloat(data[ex.id]?.value)||0)>0).length;
-    rs.textContent = `${filled}/${group.exercises.length} exercices${window._userProfile?.girlMode?' · 💜 Mode Féminin':''}`;
+    rs.textContent = `${filled}/${group.exercises.length} exercices enregistrés${window._userProfile?.girlMode?' · 💜 Mode Féminin':''}`;
   }
   const rankTitle = document.querySelector('#gym-muscle-rank-card div > div > div:first-child');
-  if(rankTitle) rankTitle.textContent = `Rang global — ${group.label}`;
+  if(rankTitle) rankTitle.textContent = `Rang — ${group.label}`;
 
+  // Exercises list
   const list = document.getElementById('gym-exercises-list');
   if (!list) return;
   list.innerHTML = group.exercises.map(ex => {
@@ -877,54 +888,78 @@ function renderGymPage() {
     const reps = saved.reps || '';
     const sets = saved.sets || '';
     const note = saved.note || '';
+    const effective = getEffectiveValue(saved, ex);
     const thresholds = getThresholds(ex);
-    const rank = val > 0 ? getRankForValue(thresholds, val) : null;
+    const rank = effective > 0 ? getRankForValue(thresholds, effective) : null;
     const nextRankIdx = rank ? Math.min(RANKS.findIndex(r=>r.id===rank.id)+1, RANKS.length-1) : 1;
     const nextRank = RANKS[nextRankIdx];
     const nextThreshold = thresholds[nextRankIdx];
-    const prLabel = val > 0 ? (ex.unit==='lbs' ? `${val} lbs${reps?' × '+reps+' reps':''}${sets?' · '+sets+' séries':''}` : `${val} ${ex.unit}${reps?' × '+reps:''}`) : '';
+    const prLabel = val > 0
+      ? (ex.unit==='lbs'
+          ? `${val} lbs${reps?' × '+reps+' reps':''}${sets?' · '+sets+' séries':''}`
+          : `${val} ${ex.unit}${reps?' × '+reps:''}`)
+      : '';
+    const effectiveLabel = (ex.unit==='lbs' && reps > 1 && effective !== val)
+      ? `<span style="font-size:10px;color:var(--text-muted)"> (1RM estimé: ~${effective} lbs)</span>` : '';
+
     return `
-      <div style="background:var(--dark2);border:1px solid ${rank?rank.color+'30':'rgba(147,51,234,0.12)'};border-radius:16px;padding:14px;margin-bottom:12px;position:relative;overflow:hidden">
-        ${rank ? `<div style="position:absolute;top:0;left:0;right:0;height:3px;background:${rank.color};border-radius:16px 16px 0 0;opacity:0.7"></div>` : ''}
+      <div style="background:var(--dark2);border:1px solid ${rank?rank.color+'35':'rgba(147,51,234,0.12)'};border-radius:16px;padding:14px;margin-bottom:12px;position:relative;overflow:hidden">
+        ${rank ? `<div style="position:absolute;top:0;left:0;right:0;height:3px;background:${rank.color};border-radius:16px 16px 0 0;opacity:0.8"></div>` : ''}
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
           <div style="flex:1;min-width:0">
             <div style="font-size:15px;font-weight:700;color:var(--text)">${ex.name}</div>
-            ${prLabel ? `<div style="font-size:12px;color:var(--gold);font-weight:700;margin-top:3px">🏆 PR : ${prLabel}</div>` : `<div style="font-size:11px;color:var(--text-muted);margin-top:2px">Aucun record enregistré</div>`}
-            ${note ? `<div style="font-size:11px;color:rgba(192,132,252,0.8);margin-top:3px;font-style:italic">📝 ${note}</div>` : ''}
+            ${prLabel
+              ? `<div style="font-size:12px;color:var(--gold);font-weight:700;margin-top:3px">🏆 PR : ${prLabel}${effectiveLabel}</div>`
+              : `<div style="font-size:11px;color:var(--text-muted);margin-top:2px">Aucun score enregistré</div>`}
+            ${note ? `<div style="font-size:11px;color:rgba(192,132,252,0.75);margin-top:3px;font-style:italic">📝 ${note}</div>` : ''}
           </div>
-          <div style="text-align:right;flex-shrink:0;margin-left:10px">
-            ${rank ? `<div style="font-size:22px">${rank.icon}</div><div style="font-size:10px;font-weight:700;color:${rank.color};letter-spacing:1px">${rank.label}</div>` : '<div style="font-size:20px;opacity:0.3">🩶</div>'}
+          <div style="text-align:center;flex-shrink:0;margin-left:10px;min-width:60px">
+            ${rank
+              ? `<div style="font-size:26px">${rank.icon}</div><div style="font-size:10px;font-weight:700;color:${rank.color};letter-spacing:1px;margin-top:2px">${rank.label}</div>`
+              : `<div style="font-size:22px;opacity:0.25">🩶</div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px">Bronze</div>`}
           </div>
         </div>
+
         <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:6px;margin-bottom:8px">
           <div>
-            <div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px;text-transform:uppercase">${ex.unit==='lbs'?'⚖️ Poids (lbs)':ex.unit==='reps'?'🔁 Reps max':ex.unit==='km'?'📍 Km':ex.unit==='min'?'⏱ Min':'📊 Score'}</div>
-            <input type="number" id="gym-input-${ex.id}" value="${val||''}" placeholder="0" step="${ex.unit==='km'?'0.1':'1'}" style="width:100%;background:var(--dark3);border:1px solid rgba(147,51,234,0.25);border-radius:8px;padding:8px 10px;color:var(--text);font-size:15px;font-weight:700;font-family:'Rajdhani',sans-serif;outline:none">
+            <div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px;text-transform:uppercase">${ex.unit==='lbs'?'⚖️ Poids (lbs)':ex.unit==='reps'?'🔁 Reps':ex.unit==='km'?'📍 Km':ex.unit==='min'?'⏱ Min':'📊 Score'}</div>
+            <input type="number" id="gym-input-${ex.id}" value="${val||''}" placeholder="0" step="${ex.unit==='km'?'0.1':'1'}" style="width:100%;background:var(--dark3);border:1px solid rgba(147,51,234,0.25);border-radius:8px;padding:9px 10px;color:var(--text);font-size:16px;font-weight:700;font-family:'Rajdhani',sans-serif;outline:none;text-align:center">
           </div>
           <div>
             <div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px;text-transform:uppercase">🔁 Reps</div>
-            <input type="number" id="gym-reps-${ex.id}" value="${reps}" placeholder="0" min="1" style="width:100%;background:var(--dark3);border:1px solid rgba(147,51,234,0.25);border-radius:8px;padding:8px 10px;color:var(--text);font-size:15px;font-weight:700;font-family:'Rajdhani',sans-serif;outline:none">
+            <input type="number" id="gym-reps-${ex.id}" value="${reps}" placeholder="0" min="1" style="width:100%;background:var(--dark3);border:1px solid rgba(147,51,234,0.25);border-radius:8px;padding:9px 10px;color:var(--text);font-size:16px;font-weight:700;font-family:'Rajdhani',sans-serif;outline:none;text-align:center">
           </div>
           <div>
             <div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px;text-transform:uppercase">📦 Séries</div>
-            <input type="number" id="gym-sets-${ex.id}" value="${sets}" placeholder="0" min="1" style="width:100%;background:var(--dark3);border:1px solid rgba(147,51,234,0.25);border-radius:8px;padding:8px 10px;color:var(--text);font-size:15px;font-weight:700;font-family:'Rajdhani',sans-serif;outline:none">
+            <input type="number" id="gym-sets-${ex.id}" value="${sets}" placeholder="0" min="1" style="width:100%;background:var(--dark3);border:1px solid rgba(147,51,234,0.25);border-radius:8px;padding:9px 10px;color:var(--text);font-size:16px;font-weight:700;font-family:'Rajdhani',sans-serif;outline:none;text-align:center">
           </div>
         </div>
+
         <div style="margin-bottom:8px">
-          <div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px;text-transform:uppercase">📝 Notes (ex: 3×10 @ 135lbs, ressenti...)</div>
-          <input type="text" id="gym-note-${ex.id}" value="${note}" placeholder="Ajoute tes notes de séance..." style="width:100%;background:var(--dark3);border:1px solid rgba(147,51,234,0.2);border-radius:8px;padding:8px 10px;color:var(--text);font-size:12px;font-family:'Rajdhani',sans-serif;outline:none">
+          <div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px;text-transform:uppercase">📝 Notes</div>
+          <input type="text" id="gym-note-${ex.id}" value="${note}" placeholder="Ex: bonne forme, fatigue, objectif..." style="width:100%;background:var(--dark3);border:1px solid rgba(147,51,234,0.2);border-radius:8px;padding:8px 10px;color:var(--text);font-size:12px;font-family:'Rajdhani',sans-serif;outline:none">
         </div>
-        <button onclick="saveGymRecord('${ex.id}','${currentGymGroup}')" style="width:100%;background:linear-gradient(135deg,var(--mauve-dark),var(--rose-dark));color:#fff;border:none;border-radius:10px;padding:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Rajdhani',sans-serif;letter-spacing:2px;text-transform:uppercase">💾 Sauvegarder ce PR</button>
-        ${rank && nextRank && nextThreshold > val ? `
-          <div style="margin-top:8px">
-            <div style="font-size:10px;color:var(--text-muted);letter-spacing:1px;margin-bottom:4px">Prochain rang: ${nextRank.icon} ${nextRank.label} à ${nextThreshold} ${ex.unit}</div>
-            <div style="height:5px;background:var(--dark3);border-radius:5px;overflow:hidden;border:1px solid rgba(147,51,234,0.1)">
-              <div style="height:100%;border-radius:5px;background:${rank.color};width:${Math.min(100,(val/nextThreshold)*100).toFixed(1)}%;transition:width 0.5s ease"></div>
+
+        <button onclick="saveGymRecord('${ex.id}','${currentGymGroup}')" style="width:100%;background:linear-gradient(135deg,var(--mauve-dark),var(--rose-dark));color:#fff;border:none;border-radius:10px;padding:11px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Rajdhani',sans-serif;letter-spacing:2px;text-transform:uppercase">💾 Sauvegarder</button>
+
+        ${rank && nextRank && nextThreshold > effective ? `
+          <div style="margin-top:10px">
+            <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);margin-bottom:4px">
+              <span>${rank.icon} ${rank.label}</span>
+              <span>Prochain : ${nextRank.icon} ${nextRank.label} à ${nextThreshold} ${ex.unit}</span>
             </div>
-          </div>` : rank && rank.id==='mythic' ? `<div style="margin-top:6px;font-size:10px;color:var(--gold);letter-spacing:1px">🐉 Rang maximum atteint !</div>` : ''}
+            <div style="height:6px;background:var(--dark3);border-radius:6px;overflow:hidden;border:1px solid rgba(147,51,234,0.1)">
+              <div style="height:100%;border-radius:6px;background:linear-gradient(90deg,${rank.color},${nextRank.color});width:${Math.min(100,Math.round((effective/nextThreshold)*100))}%;transition:width 0.5s ease"></div>
+            </div>
+            <div style="text-align:right;font-size:9px;color:var(--text-muted);margin-top:2px">${Math.min(100,Math.round((effective/nextThreshold)*100))}% vers ${nextRank.label}</div>
+          </div>`
+        : rank && rank.id==='mythic'
+          ? `<div style="margin-top:8px;text-align:center;font-size:11px;color:var(--gold);letter-spacing:1px">🐉 Rang maximum atteint !</div>`
+          : ''}
       </div>`;
   }).join('');
 
+  // Free note
   const noteEl = document.getElementById('gym-free-note');
   if (noteEl) {
     const notes = JSON.parse(localStorage.getItem('gym-notes-'+(currentUser?.uid||'')) || '{}');
@@ -1698,7 +1733,8 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .cal-days-header{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px}
 .cal-day-name{text-align:center;font-size:9px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;padding:4px 0}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
-.cal-cell{aspect-ratio:1;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;font-weight:600;cursor:pointer;transition:all 0.15s;position:relative;background:var(--dark3);color:var(--text-muted)}
+.cal-cell{aspect-ratio:1;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;font-weight:600;transition:all 0.15s;position:relative;background:var(--dark3);color:var(--text-muted)}
+.cal-cell.clickable{cursor:pointer}.cal-cell.clickable:hover{border:1px solid rgba(147,51,234,0.4);background:rgba(147,51,234,0.1)}
 .cal-cell.today{border:1px solid var(--mauve);color:var(--mauve-light)}
 .cal-cell.has-session{background:linear-gradient(135deg,rgba(147,51,234,0.3),rgba(255,0,128,0.2));color:var(--text)}
 .cal-cell.has-session.muscu{background:linear-gradient(135deg,rgba(147,51,234,0.4),rgba(107,33,168,0.3))}
@@ -1773,22 +1809,22 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .trophy-count-bar{margin:8px 12px;background:var(--dark3);border-radius:10px;height:6px;overflow:hidden;position:relative;z-index:1;border:1px solid rgba(251,191,36,0.2)}
 .trophy-count-fill{height:100%;background:linear-gradient(90deg,var(--mauve),var(--gold));border-radius:10px;transition:width 0.8s ease}
 .trophy-count-text{font-size:10px;color:var(--gold);letter-spacing:2px;text-align:center;margin:4px 0 10px;position:relative;z-index:1}
-.trophies-grid{display:flex;flex-direction:column;gap:8px;padding:0 12px 14px;position:relative;z-index:1}
-.trophy-card{border-radius:14px;padding:13px 14px;border:1px solid rgba(147,51,234,0.15);background:var(--dark2);position:relative;overflow:hidden;display:flex;align-items:center;gap:12px}
-.trophy-card.unlocked{background:linear-gradient(135deg,#12002a,#250050);border-color:rgba(251,191,36,0.3);box-shadow:0 4px 16px rgba(251,191,36,0.1)}
-.trophy-card.unlocked::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 80% at 0% 50%,rgba(251,191,36,0.07),transparent)}
-.trophy-card.locked{opacity:0.45;filter:grayscale(0.6)}
-.trophy-icon{font-size:32px;flex-shrink:0;width:42px;text-align:center;line-height:1}
-.trophy-info{flex:1;min-width:0}
-.trophy-name{font-family:'Cinzel Decorative',serif;font-size:9px;letter-spacing:0.5px;color:var(--gold-light);margin-bottom:3px;line-height:1.3}
+.trophies-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 12px 14px;position:relative;z-index:1}
+.trophy-card{border-radius:14px;padding:12px 10px;border:1px solid rgba(147,51,234,0.2);background:var(--dark2);position:relative;overflow:hidden;text-align:center;transition:transform 0.15s}
+.trophy-card.unlocked{background:linear-gradient(145deg,#12002a,#250050);border-color:rgba(251,191,36,0.4);box-shadow:0 4px 20px rgba(251,191,36,0.18)}
+.trophy-card.unlocked::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(251,191,36,0.1),transparent)}
+.trophy-card.locked{opacity:0.35;filter:grayscale(0.8)}
+.trophy-icon{font-size:30px;margin-bottom:6px;display:block;line-height:1}
+.trophy-name{font-family:'Cinzel Decorative',serif;font-size:8px;letter-spacing:0.5px;color:var(--gold-light);margin-bottom:4px;line-height:1.3;min-height:22px}
 .trophy-card.locked .trophy-name{color:var(--text-muted)}
-.trophy-desc{font-size:11px;color:rgba(192,132,252,0.75);line-height:1.4;margin-bottom:3px}
+.trophy-desc{font-size:10px;color:rgba(192,132,252,0.8);line-height:1.4;margin-bottom:4px;min-height:28px}
 .trophy-card.locked .trophy-desc{color:var(--text-muted)}
-.trophy-how{font-size:10px;color:var(--text-muted);line-height:1.4;font-style:italic}
-.trophy-card.unlocked .trophy-how{color:rgba(34,197,94,0.8)}
-.trophy-badge{position:absolute;top:8px;right:8px;font-size:14px}
-.trophy-rarity{font-size:8px;letter-spacing:2px;text-transform:uppercase;font-weight:700;margin-top:2px;display:inline-block}
-.rarity-common{color:#94a3b8}.rarity-rare{color:#60a5fa}.rarity-epic{color:var(--mauve-light)}.rarity-legendary{color:var(--gold);text-shadow:0 0 8px rgba(251,191,36,0.6)}
+.trophy-badge{position:absolute;top:6px;right:6px;font-size:13px}
+.trophy-rarity{font-size:8px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;display:inline-block;padding:2px 6px;border-radius:6px;margin-top:2px}
+.rarity-common{color:#94a3b8;background:rgba(148,163,184,0.1)}
+.rarity-rare{color:#60a5fa;background:rgba(96,165,250,0.1)}
+.rarity-epic{color:var(--mauve-light);background:rgba(192,132,252,0.1)}
+.rarity-legendary{color:var(--gold);background:rgba(251,191,36,0.1);text-shadow:0 0 8px rgba(251,191,36,0.4)}
 
 .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#1a0040,#3d0030);border:1px solid var(--gold);border-radius:14px;padding:12px 18px;z-index:999;text-align:center;box-shadow:0 8px 30px rgba(251,191,36,0.3);animation:toastIn 0.4s ease,toastOut 0.4s ease 2.6s forwards;min-width:220px}
 @keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(-20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
@@ -2136,13 +2172,6 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   <div class="trophy-header"><div class="trophy-header-title">✦ Hall of Glory ✦</div><div class="trophy-subtitle" id="trophy-subtitle">Accomplis des séances pour débloquer</div></div>
   <div class="trophy-count-bar"><div class="trophy-count-fill" id="trophy-fill" style="width:0%"></div></div>
   <div class="trophy-count-text" id="trophy-count-text">0 / 74 trophées</div>
-  <div class="tabs" style="padding:4px 12px 8px">
-    <button class="tab active" onclick="filterTrophies('all',this)">Tous</button>
-    <button class="tab" onclick="filterTrophies('unlocked',this)">✅ Débloqués</button>
-    <button class="tab" onclick="filterTrophies('locked',this)">🔒 À débloquer</button>
-    <button class="tab" onclick="filterTrophies('legendary',this)">👑 Légendaires</button>
-    <button class="tab" onclick="filterTrophies('epic',this)">💜 Épiques</button>
-  </div>
   <div class="trophies-grid" id="trophies-grid"></div>
 </div>
 
