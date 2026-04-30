@@ -127,6 +127,7 @@ function initApp() {
   renderCalendar();
   renderLeaderboard();
   renderFriends();
+  renderGymPage();
 }
 
 // ===== ENTRIES =====
@@ -647,52 +648,66 @@ const GYM_GROUPS = {
   poitrine: {
     label:'Poitrine', icon:'🫁',
     exercises:[
-      {id:'bench',        name:'Bench Press',         unit:'lbs', thresholds:[0,65,115,175,225,285,365]},
-      {id:'incline_bench',name:'Incline Bench Press',  unit:'lbs', thresholds:[0,55,95,145,185,245,315]},
-      {id:'db_press',     name:'Dumbbell Press',       unit:'lbs', thresholds:[0,30,50,70,95,120,155]},
-      {id:'cable_fly',    name:'Cable Fly',            unit:'lbs', thresholds:[0,25,40,60,80,105,135]},
-      {id:'dips_bw',      name:'Dips (poids corps)',   unit:'reps',thresholds:[0,5,10,15,20,25,30]},
+      {id:'bench',         name:'Bench Press',          unit:'lbs', thresholds:[0,65,115,175,225,285,365]},
+      {id:'incline_bench', name:'Incline Bench Press',  unit:'lbs', thresholds:[0,55,95,145,185,245,315]},
+      {id:'decline_bench', name:'Decline Bench Press',  unit:'lbs', thresholds:[0,65,110,165,215,275,345]},
+      {id:'db_press',      name:'Dumbbell Press',        unit:'lbs', thresholds:[0,30,50,70,95,120,155]},
+      {id:'db_fly',        name:'Dumbbell Fly',          unit:'lbs', thresholds:[0,15,25,40,55,70,90]},
+      {id:'cable_fly',     name:'Cable Fly',             unit:'lbs', thresholds:[0,25,40,60,80,105,135]},
+      {id:'pec_deck',      name:'Pec Deck Machine',      unit:'lbs', thresholds:[0,40,70,105,140,180,225]},
+      {id:'dips_bw',       name:'Dips (poids corps)',    unit:'reps',thresholds:[0,5,10,15,20,25,30]},
+      {id:'push_up',       name:'Push-ups',              unit:'reps',thresholds:[0,10,20,35,50,70,100]},
     ]
   },
   biceps: {
     label:'Biceps', icon:'💪',
     exercises:[
-      {id:'db_curl',      name:'Dumbbell Curl',        unit:'lbs', thresholds:[0,20,30,45,60,75,95]},
-      {id:'hammer_curl',  name:'Hammer Curl',          unit:'lbs', thresholds:[0,20,35,50,65,80,100]},
-      {id:'cable_curl',   name:'Cable Curl',           unit:'lbs', thresholds:[0,25,40,55,75,95,120]},
-      {id:'bar_curl',     name:'Curl avec barre',      unit:'lbs', thresholds:[0,45,65,95,125,155,195]},
-      {id:'preacher_curl',name:'Preacher Curl',        unit:'lbs', thresholds:[0,35,55,80,105,135,170]},
+      {id:'db_curl',       name:'Dumbbell Curl',         unit:'lbs', thresholds:[0,20,30,45,60,75,95]},
+      {id:'hammer_curl',   name:'Hammer Curl',           unit:'lbs', thresholds:[0,20,35,50,65,80,100]},
+      {id:'cable_curl',    name:'Cable Curl',            unit:'lbs', thresholds:[0,25,40,55,75,95,120]},
+      {id:'bar_curl',      name:'Curl avec barre',       unit:'lbs', thresholds:[0,45,65,95,125,155,195]},
+      {id:'preacher_curl', name:'Preacher Curl',         unit:'lbs', thresholds:[0,35,55,80,105,135,170]},
+      {id:'conc_curl',     name:'Concentration Curl',    unit:'lbs', thresholds:[0,15,25,35,50,65,80]},
+      {id:'spider_curl',   name:'Spider Curl',           unit:'lbs', thresholds:[0,20,35,50,65,80,100]},
     ]
   },
   triceps: {
     label:'Triceps', icon:'⚡',
     exercises:[
-      {id:'tri_dips',     name:'Dips triceps',         unit:'reps',thresholds:[0,5,10,15,20,25,30]},
-      {id:'pushdown',     name:'Tricep Pushdown',      unit:'lbs', thresholds:[0,30,50,70,95,120,155]},
-      {id:'overhead_tri', name:'Overhead Tricep Ext',  unit:'lbs', thresholds:[0,25,40,60,80,100,130]},
-      {id:'skullcrusher', name:'Skull Crusher',        unit:'lbs', thresholds:[0,35,55,80,105,135,170]},
-      {id:'tri_kickback',  name:'Tricep Kickback',     unit:'lbs', thresholds:[0,15,25,35,50,65,80]},
+      {id:'tri_dips',      name:'Dips triceps',          unit:'reps',thresholds:[0,5,10,15,20,25,30]},
+      {id:'pushdown',      name:'Tricep Pushdown',       unit:'lbs', thresholds:[0,30,50,70,95,120,155]},
+      {id:'overhead_tri',  name:'Overhead Tricep Ext',   unit:'lbs', thresholds:[0,25,40,60,80,100,130]},
+      {id:'skullcrusher',  name:'Skull Crusher',         unit:'lbs', thresholds:[0,35,55,80,105,135,170]},
+      {id:'tri_kickback',  name:'Tricep Kickback',       unit:'lbs', thresholds:[0,15,25,35,50,65,80]},
+      {id:'close_bench',   name:'Close Grip Bench',      unit:'lbs', thresholds:[0,55,95,135,175,225,285]},
+      {id:'rope_pushdown', name:'Rope Pushdown',         unit:'lbs', thresholds:[0,25,40,60,80,105,135]},
     ]
   },
   dos: {
     label:'Dos', icon:'🦅',
     exercises:[
-      {id:'lat_pulldown',  name:'Lat Pull Down',        unit:'lbs', thresholds:[0,55,85,120,155,195,245]},
+      {id:'lat_pulldown',  name:'Lat Pull Down',         unit:'lbs', thresholds:[0,55,85,120,155,195,245]},
       {id:'cable_row',     name:'Cable Row',             unit:'lbs', thresholds:[0,55,90,130,165,210,265]},
       {id:'db_row',        name:'Dumbbell Row',          unit:'lbs', thresholds:[0,35,55,80,105,135,170]},
+      {id:'bb_row',        name:'Barbell Row',           unit:'lbs', thresholds:[0,65,105,155,205,265,335]},
       {id:'pullup',        name:'Pull-up (poids corps)', unit:'reps',thresholds:[0,3,6,10,15,20,25]},
       {id:'deadlift',      name:'Deadlift',              unit:'lbs', thresholds:[0,95,155,225,295,365,455]},
+      {id:'t_bar_row',     name:'T-Bar Row',             unit:'lbs', thresholds:[0,45,75,115,155,205,265]},
+      {id:'seated_row',    name:'Seated Cable Row',      unit:'lbs', thresholds:[0,55,90,130,165,210,265]},
     ]
   },
   epaules: {
     label:'Épaules', icon:'🎯',
     exercises:[
-      {id:'shoulder_press',name:'Shoulder Press',       unit:'lbs', thresholds:[0,45,75,110,145,185,235]},
+      {id:'shoulder_press',name:'Shoulder Press (barre)',unit:'lbs', thresholds:[0,45,75,110,145,185,235]},
       {id:'db_shoulder',   name:'DB Shoulder Press',    unit:'lbs', thresholds:[0,25,40,60,80,100,130]},
       {id:'lateral_raise', name:'Lateral Raise',        unit:'lbs', thresholds:[0,10,20,30,40,55,70]},
       {id:'front_raise',   name:'Front Raise',          unit:'lbs', thresholds:[0,10,20,30,40,50,65]},
-      {id:'reverse_fly',   name:'Reverse Fly',          unit:'lbs', thresholds:[0,10,20,30,40,55,70]},
-      {id:'face_pull',     name:'Face Pull',             unit:'lbs', thresholds:[0,30,50,70,90,115,145]},
+      {id:'rear_delt_fly', name:'Rear Delt Fly',        unit:'lbs', thresholds:[0,10,20,30,40,55,70]},
+      {id:'face_pull',     name:'Face Pull',            unit:'lbs', thresholds:[0,30,50,70,90,115,145]},
+      {id:'arnold_press',  name:'Arnold Press',         unit:'lbs', thresholds:[0,20,35,55,70,90,115]},
+      {id:'upright_row',   name:'Upright Row',          unit:'lbs', thresholds:[0,35,55,80,105,135,170]},
+      {id:'shrugs',        name:'Shrugs (haussements)', unit:'lbs', thresholds:[0,65,115,175,225,285,365]},
     ]
   },
   jambes: {
@@ -701,10 +716,12 @@ const GYM_GROUPS = {
       {id:'squat',         name:'Squat',                unit:'lbs', thresholds:[0,95,155,225,295,365,455]},
       {id:'hack_squat',    name:'Hack Squat',           unit:'lbs', thresholds:[0,90,145,205,265,335,415]},
       {id:'leg_press',     name:'Leg Press',            unit:'lbs', thresholds:[0,135,225,315,405,495,630]},
-      {id:'lunge',         name:'Fentes',               unit:'lbs', thresholds:[0,0,30,55,80,105,135]},
-      {id:'leg_curl',      name:'Leg Curl',             unit:'lbs', thresholds:[0,40,65,95,120,150,190]},
+      {id:'rdl',           name:'Romanian Deadlift',    unit:'lbs', thresholds:[0,65,115,175,225,285,365]},
+      {id:'lunge',         name:'Fentes (par jambe)',   unit:'lbs', thresholds:[0,0,30,55,80,105,135]},
+      {id:'leg_curl',      name:'Leg Curl (couché)',    unit:'lbs', thresholds:[0,40,65,95,120,150,190]},
       {id:'leg_ext',       name:'Leg Extension',        unit:'lbs', thresholds:[0,40,65,95,120,155,195]},
       {id:'calf_raise',    name:'Mollet / Calf Raise',  unit:'lbs', thresholds:[0,65,105,155,205,265,335]},
+      {id:'sumo_squat',    name:'Sumo Squat',           unit:'lbs', thresholds:[0,85,135,195,255,325,405]},
     ]
   },
   cardio: {
@@ -716,6 +733,8 @@ const GYM_GROUPS = {
       {id:'bike_km',       name:'Vélo (km)',            unit:'km',  thresholds:[0,5,15,30,50,75,100]},
       {id:'swim_lengths',  name:'Natation (longueurs)', unit:'x',   thresholds:[0,4,10,20,35,50,70]},
       {id:'jump_rope',     name:'Corde à sauter (min)', unit:'min', thresholds:[0,2,5,10,15,20,30]},
+      {id:'rowing_m',      name:'Rowing machine (m)',   unit:'m',   thresholds:[0,500,1000,2000,3000,4000,5000]},
+      {id:'elliptic_min',  name:'Elliptique (min)',     unit:'min', thresholds:[0,10,20,30,45,60,90]},
     ]
   },
 };
@@ -819,34 +838,54 @@ function renderGymPage() {
   list.innerHTML = group.exercises.map(ex => {
     const saved = data[ex.id] || {};
     const val = parseFloat(saved.value) || 0;
+    const reps = saved.reps || '';
+    const sets = saved.sets || '';
+    const note = saved.note || '';
     const thresholds = getThresholds(ex);
     const rank = val > 0 ? getRankForValue(thresholds, val) : null;
     const nextRankIdx = rank ? Math.min(RANKS.findIndex(r=>r.id===rank.id)+1, RANKS.length-1) : 1;
     const nextRank = RANKS[nextRankIdx];
     const nextThreshold = thresholds[nextRankIdx];
+    const prLabel = val > 0 ? (ex.unit==='lbs' ? `${val} lbs${reps?' × '+reps+' reps':''}${sets?' · '+sets+' séries':''}` : `${val} ${ex.unit}${reps?' × '+reps:''}`) : '';
     return `
-      <div style="background:var(--dark2);border:1px solid ${rank?rank.color+'30':'rgba(147,51,234,0.12)'};border-radius:14px;padding:14px;margin-bottom:10px;position:relative;overflow:hidden">
-        ${rank ? `<div style="position:absolute;top:0;left:0;right:0;height:3px;background:${rank.color};border-radius:14px 14px 0 0;opacity:0.6"></div>` : ''}
+      <div style="background:var(--dark2);border:1px solid ${rank?rank.color+'30':'rgba(147,51,234,0.12)'};border-radius:16px;padding:14px;margin-bottom:12px;position:relative;overflow:hidden">
+        ${rank ? `<div style="position:absolute;top:0;left:0;right:0;height:3px;background:${rank.color};border-radius:16px 16px 0 0;opacity:0.7"></div>` : ''}
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:15px;font-weight:700;color:var(--text)">${ex.name}</div>
+            ${prLabel ? `<div style="font-size:12px;color:var(--gold);font-weight:700;margin-top:3px">🏆 PR : ${prLabel}</div>` : `<div style="font-size:11px;color:var(--text-muted);margin-top:2px">Aucun record enregistré</div>`}
+            ${note ? `<div style="font-size:11px;color:rgba(192,132,252,0.8);margin-top:3px;font-style:italic">📝 ${note}</div>` : ''}
+          </div>
+          <div style="text-align:right;flex-shrink:0;margin-left:10px">
+            ${rank ? `<div style="font-size:22px">${rank.icon}</div><div style="font-size:10px;font-weight:700;color:${rank.color};letter-spacing:1px">${rank.label}</div>` : '<div style="font-size:20px;opacity:0.3">🩶</div>'}
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:6px;margin-bottom:8px">
           <div>
-            <div style="font-size:14px;font-weight:700;color:var(--text)">${ex.name}</div>
-            <div style="font-size:10px;color:var(--text-muted);letter-spacing:1px;margin-top:2px">${ex.unit==='lbs'?'⚖️ Poids max':ex.unit==='reps'?'🔁 Reps max':ex.unit==='km'?'📍 Distance':ex.unit==='min'?'⏱ Durée':'📊 Score'}</div>
+            <div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px;text-transform:uppercase">${ex.unit==='lbs'?'⚖️ Poids (lbs)':ex.unit==='reps'?'🔁 Reps max':ex.unit==='km'?'📍 Km':ex.unit==='min'?'⏱ Min':'📊 Score'}</div>
+            <input type="number" id="gym-input-${ex.id}" value="${val||''}" placeholder="0" step="${ex.unit==='km'?'0.1':'1'}" style="width:100%;background:var(--dark3);border:1px solid rgba(147,51,234,0.25);border-radius:8px;padding:8px 10px;color:var(--text);font-size:15px;font-weight:700;font-family:'Rajdhani',sans-serif;outline:none">
           </div>
-          <div style="text-align:right">
-            ${rank ? `<div style="font-size:20px">${rank.icon}</div><div style="font-size:10px;font-weight:700;color:${rank.color};letter-spacing:1px">${rank.label}</div>` : '<div style="font-size:18px">🩶</div><div style="font-size:10px;color:var(--text-muted)">Non enregistré</div>'}
+          <div>
+            <div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px;text-transform:uppercase">🔁 Reps</div>
+            <input type="number" id="gym-reps-${ex.id}" value="${reps}" placeholder="0" min="1" style="width:100%;background:var(--dark3);border:1px solid rgba(147,51,234,0.25);border-radius:8px;padding:8px 10px;color:var(--text);font-size:15px;font-weight:700;font-family:'Rajdhani',sans-serif;outline:none">
+          </div>
+          <div>
+            <div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px;text-transform:uppercase">📦 Séries</div>
+            <input type="number" id="gym-sets-${ex.id}" value="${sets}" placeholder="0" min="1" style="width:100%;background:var(--dark3);border:1px solid rgba(147,51,234,0.25);border-radius:8px;padding:8px 10px;color:var(--text);font-size:15px;font-weight:700;font-family:'Rajdhani',sans-serif;outline:none">
           </div>
         </div>
-        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
-          <input type="number" id="gym-input-${ex.id}" value="${val||''}" placeholder="0 ${ex.unit}" step="${ex.unit==='km'?'0.1':'1'}" style="flex:1;background:var(--dark3);border:1px solid rgba(147,51,234,0.2);border-radius:10px;padding:9px 12px;color:var(--text);font-size:15px;font-family:'Rajdhani',sans-serif;outline:none">
-          <button onclick="saveGymRecord('${ex.id}','${currentGymGroup}')" style="background:linear-gradient(135deg,var(--mauve-dark),var(--rose-dark));color:#fff;border:none;border-radius:10px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Rajdhani',sans-serif;letter-spacing:1px;white-space:nowrap">💾 Save</button>
+        <div style="margin-bottom:8px">
+          <div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px;text-transform:uppercase">📝 Notes (ex: 3×10 @ 135lbs, ressenti...)</div>
+          <input type="text" id="gym-note-${ex.id}" value="${note}" placeholder="Ajoute tes notes de séance..." style="width:100%;background:var(--dark3);border:1px solid rgba(147,51,234,0.2);border-radius:8px;padding:8px 10px;color:var(--text);font-size:12px;font-family:'Rajdhani',sans-serif;outline:none">
         </div>
-        ${saved.note ? `<div style="font-size:11px;color:rgba(192,132,252,0.7);margin-bottom:6px;font-style:italic">📝 ${saved.note}</div>` : ''}
-        <input type="text" id="gym-note-${ex.id}" value="${saved.note||''}" placeholder="Note optionnelle..." style="width:100%;background:var(--dark3);border:1px solid rgba(147,51,234,0.15);border-radius:8px;padding:7px 10px;color:var(--text);font-size:12px;font-family:'Rajdhani',sans-serif;outline:none;margin-bottom:6px">
+        <button onclick="saveGymRecord('${ex.id}','${currentGymGroup}')" style="width:100%;background:linear-gradient(135deg,var(--mauve-dark),var(--rose-dark));color:#fff;border:none;border-radius:10px;padding:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Rajdhani',sans-serif;letter-spacing:2px;text-transform:uppercase">💾 Sauvegarder ce PR</button>
         ${rank && nextRank && nextThreshold > val ? `
-          <div style="font-size:10px;color:var(--text-muted);letter-spacing:1px">Prochain rang: ${nextRank.icon} ${nextRank.label} à ${nextThreshold} ${ex.unit}</div>
-          <div style="height:4px;background:var(--dark3);border-radius:4px;margin-top:5px;overflow:hidden">
-            <div style="height:100%;border-radius:4px;background:${rank.color};width:${Math.min(100,(val/nextThreshold)*100).toFixed(1)}%;transition:width 0.5s ease"></div>
-          </div>` : rank && rank.id==='mythic' ? `<div style="font-size:10px;color:var(--gold);letter-spacing:1px">🐉 Rang maximum atteint !</div>` : ''}
+          <div style="margin-top:8px">
+            <div style="font-size:10px;color:var(--text-muted);letter-spacing:1px;margin-bottom:4px">Prochain rang: ${nextRank.icon} ${nextRank.label} à ${nextThreshold} ${ex.unit}</div>
+            <div style="height:5px;background:var(--dark3);border-radius:5px;overflow:hidden;border:1px solid rgba(147,51,234,0.1)">
+              <div style="height:100%;border-radius:5px;background:${rank.color};width:${Math.min(100,(val/nextThreshold)*100).toFixed(1)}%;transition:width 0.5s ease"></div>
+            </div>
+          </div>` : rank && rank.id==='mythic' ? `<div style="margin-top:6px;font-size:10px;color:var(--gold);letter-spacing:1px">🐉 Rang maximum atteint !</div>` : ''}
       </div>`;
   }).join('');
 
@@ -859,12 +898,20 @@ function renderGymPage() {
 
 window.saveGymRecord = function(exId, groupKey) {
   const val = parseFloat(document.getElementById('gym-input-'+exId)?.value) || 0;
+  const reps = parseInt(document.getElementById('gym-reps-'+exId)?.value) || 0;
+  const sets = parseInt(document.getElementById('gym-sets-'+exId)?.value) || 0;
   const note = document.getElementById('gym-note-'+exId)?.value || '';
   const data = getGymData();
   const prev = data[exId]?.value || 0;
-  data[exId] = { value: val, note, updatedAt: new Date().toISOString() };
+  const ex = GYM_GROUPS[groupKey]?.exercises.find(e=>e.id===exId);
+  data[exId] = { value: val, reps: reps||'', sets: sets||'', note, updatedAt: new Date().toISOString() };
   saveGymData(data);
-  if (val > prev && prev > 0) showToast({icon:'🏆', name:'Nouveau PR ! '+val+' '+GYM_GROUPS[groupKey].exercises.find(e=>e.id===exId)?.unit});
+  if (val > prev && prev > 0) {
+    const label = reps ? val+' '+ex?.unit+' × '+reps+' reps' : val+' '+ex?.unit;
+    showToast({icon:'🏆', name:'Nouveau PR ! '+label});
+  } else if (val > 0 && prev === 0) {
+    showToast({icon:'✅', name:'Record enregistré !'});
+  }
   renderGymPage();
   checkNewTrophies();
 };
@@ -1091,16 +1138,20 @@ function updateUserBar() {
   if(pseudoEl) pseudoEl.textContent = window._userProfile?.pseudo || '';
   const totalXP = getTotalXP(entries);
   const lvlData = getLevel(totalXP);
-  if(lvlEl) lvlEl.textContent = lvlData.icon+' Niv.'+lvlData.level+' — '+lvlData.title;
-  if(xpBarEl) xpBarEl.style.width = lvlData.progress+'%';
-  if(xpTextEl) xpTextEl.textContent = totalXP.toLocaleString()+' XP total · '+getWeeklyXP()+' XP cette semaine';
+  if(lvlEl) lvlEl.textContent = lvlData.icon + ' Niv.' + lvlData.level + ' — ' + lvlData.title;
+  if(xpBarEl) xpBarEl.style.width = lvlData.progress + '%';
+  const xpForCurrent = (lvlData.level - 1) * (lvlData.level - 1) * 100;
+  const xpForNext = lvlData.level * lvlData.level * 100;
+  const xpInLevel = totalXP - xpForCurrent;
+  const xpNeeded = xpForNext - xpForCurrent;
+  if(xpTextEl) xpTextEl.textContent = 'Niv.' + lvlData.level + ' · ' + xpInLevel + ' / ' + xpNeeded + ' XP → Niv.' + (lvlData.level + 1);
   const selTitle = window._userProfile?.selectedTitle;
   if(titleEl) {
     if(selTitle) {
       const t = TROPHIES.find(x=>x.id===selTitle);
-      if(t) { titleEl.textContent = t.icon+' '+t.name; titleEl.style.display='block'; }
-      else titleEl.style.display='none';
-    } else { titleEl.style.display='none'; }
+      if(t) { titleEl.textContent = t.icon + ' ' + t.name; titleEl.style.display = 'block'; }
+      else titleEl.style.display = 'none';
+    } else { titleEl.style.display = 'none'; }
   }
 }
 
@@ -2046,7 +2097,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 <div class="page" id="page-trophies">
   <div class="trophy-header"><div class="trophy-header-title">✦ Hall of Glory ✦</div><div class="trophy-subtitle" id="trophy-subtitle">Accomplis des séances pour débloquer</div></div>
   <div class="trophy-count-bar"><div class="trophy-count-fill" id="trophy-fill" style="width:0%"></div></div>
-  <div class="trophy-count-text" id="trophy-count-text">0 / 35 trophées</div>
+  <div class="trophy-count-text" id="trophy-count-text">0 / 74 trophées</div>
   <div class="trophies-grid" id="trophies-grid"></div>
 </div>
 
