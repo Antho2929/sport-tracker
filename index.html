@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -1738,7 +1739,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .cal-cell.has-session{background:linear-gradient(135deg,rgba(147,51,234,0.3),rgba(255,0,128,0.2));color:var(--text)}
 .cal-cell.has-session.muscu{background:linear-gradient(135deg,rgba(147,51,234,0.4),rgba(107,33,168,0.3))}
 .cal-cell.has-session.cardio{background:linear-gradient(135deg,rgba(255,0,128,0.3),rgba(192,0,106,0.2))}
-.cal-cell.other-month{opacity:0.25}
+.cal-cell.other-month{opacity:0.25;cursor:default;pointer-events:none}.cal-cell:not(.other-month):hover{border-color:rgba(147,51,234,0.4)!important;background:rgba(147,51,234,0.15);color:var(--text)}
 .cal-cell-dot{width:4px;height:4px;border-radius:50%;background:var(--rose-flash);position:absolute;bottom:3px}
 .cal-detail{background:var(--dark3);border:1px solid rgba(147,51,234,0.2);border-radius:12px;padding:12px;margin-top:10px;display:none}
 .cal-detail.show{display:block}
@@ -2042,7 +2043,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <div class="cal-header"><button class="cal-nav" onclick="calPrev()">‹</button><div class="cal-title" id="cal-title"></div><button class="cal-nav" onclick="calNext()">›</button></div>
     <div class="cal-days-header"><div class="cal-day-name">Dim</div><div class="cal-day-name">Lun</div><div class="cal-day-name">Mar</div><div class="cal-day-name">Mer</div><div class="cal-day-name">Jeu</div><div class="cal-day-name">Ven</div><div class="cal-day-name">Sam</div></div>
     <div class="cal-grid" id="cal-grid"></div>
-    <div class="cal-detail" id="cal-detail"><div class="cal-detail-title" id="cal-detail-title"></div><div id="cal-detail-sessions"></div></div>
+    <div class="cal-detail" id="cal-detail"><div class="cal-detail-title" id="cal-detail-title"></div><div id="cal-detail-sessions"></div><button class="cal-add-btn" id="cal-add-btn" style="width:100%;margin-top:10px;background:linear-gradient(135deg,var(--mauve-dark),var(--rose-dark));color:#fff;border:none;border-radius:10px;padding:12px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Rajdhani',sans-serif;letter-spacing:2px;text-transform:uppercase">+ Ajouter une séance ce jour</button></div>
   </div>
 </div>
 
