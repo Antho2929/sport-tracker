@@ -627,37 +627,38 @@ function getStreak(e) {
 }
 
 function renderTrophies() {
-  const grid = document.getElementById('trophies-grid'); if(!grid) return;
   const unlocked = TROPHIES.filter(t=>t.check(entries));
   const uIds = unlocked.map(t=>t.id);
   const count = unlocked.length, total = TROPHIES.length;
-  const fill = document.getElementById('trophy-fill'); if(fill) fill.style.width=(count/total*100)+'%';
-  const ct = document.getElementById('trophy-count-text'); if(ct) ct.textContent=count+' / '+total+' trophées débloqués';
-  const st = document.getElementById('trophy-subtitle'); if(st) st.textContent=count===0?'Commence à t\'entraîner !':count<5?'Tu gagnes ta légende...':count<15?'Les dieux t\'observent !':count<30?'Tu es sur le chemin des dieux !':'Tu es une véritable légende !';
-
-  const rarityOrder = {legendary:0, epic:1, rare:2, common:3};
-  const rarityLabel = {common:'Commun', rare:'Rare', epic:'Épique', legendary:'Légendaire'};
-
-  // Sort: unlocked first (by rarity), then locked (by rarity)
-  const sorted = [...TROPHIES].sort((a,b)=>{
-    const au = uIds.includes(a.id), bu = uIds.includes(b.id);
-    if(au && !bu) return -1;
-    if(!au && bu) return 1;
-    return rarityOrder[a.rarity] - rarityOrder[b.rarity];
+  const fill = document.getElementById('trophy-fill');
+  if(fill) fill.style.width=(count/total*100)+'%';
+  const ct = document.getElementById('trophy-count-text');
+  if(ct) ct.textContent=count+' / '+total+' trophées débloqués';
+  const subtitles = ['Commence à t\'entraîner !','Tu gagnes ta légende...','Les dieux t\'observent !','Tu es sur le chemin des dieux !','Tu es une véritable légende !'];
+  const st = document.getElementById('trophy-subtitle');
+  if(st) st.textContent=count===0?subtitles[0]:count<5?subtitles[1]:count<15?subtitles[2]:count<30?subtitles[3]:subtitles[4];
+  const rarityOrder={legendary:0,epic:1,rare:2,common:3};
+  const rarityLabel={common:'Commun',rare:'Rare',epic:'Épique',legendary:'Légendaire'};
+  const sorted=[...TROPHIES].sort((a,b)=>{
+    const au=uIds.includes(a.id),bu=uIds.includes(b.id);
+    if(au&&!bu) return -1; if(!au&&bu) return 1;
+    return rarityOrder[a.rarity]-rarityOrder[b.rarity];
   });
-
-  grid.innerHTML = sorted.map(t=>{
-    const u = uIds.includes(t.id);
-    return `<div class="trophy-card ${u?'unlocked':'locked'}">
-      ${u?'<div class="trophy-badge">✅</div>':''}
-      <span class="trophy-icon">${t.icon}</span>
-      <div class="trophy-name">${t.name}</div>
-      <div class="trophy-desc">${t.desc}</div>
-      <span class="trophy-rarity rarity-${t.rarity}">${rarityLabel[t.rarity]||t.rarity}</span>
-    </div>`;
+  const html=sorted.map(t=>{
+    const u=uIds.includes(t.id);
+    const rLabel=rarityLabel[t.rarity]||t.rarity;
+    return '<div class="trophy-card '+(u?'unlocked':'locked')+'">'
+      +(u?'<div class="trophy-badge">✅</div>':'')
+      +'<span class="trophy-icon">'+t.icon+'</span>'
+      +'<div class="trophy-name">'+t.name+'</div>'
+      +'<div class="trophy-desc">'+t.desc+'</div>'
+      +'<span class="trophy-rarity rarity-'+t.rarity+'">'+rLabel+'</span>'
+      +'</div>';
   }).join('');
+  window._trophyHTML = html;
+  const grid = document.getElementById('trophies-grid');
+  if(grid) grid.innerHTML = html;
 }
-
 function checkNewTrophies() {
   const prev = JSON.parse(localStorage.getItem('unlocked-trophies-'+(currentUser?.uid||''))||'[]');
   const current = TROPHIES.filter(t=>t.check(entries)).map(t=>t.id);
@@ -789,54 +790,6 @@ function getRankForValue(thresholds, value) {
   return RANKS[Math.min(rank, RANKS.length-1)];
 }
 
-function getThresholds(ex) {
-  const girlMode = window._userProfile?.girlMode || false;
-  if(!girlMode) return ex.thresholds;
-  return ex.thresholds.map((v,i) => i===0 ? 0 : Math.round(v*0.65));
-}
-
-function getMuscleRank(groupKey) {
-  const group = GYM_GROUPS[groupKey];
-  const data = getGymData();
-  let totalRankIdx = 0, count = 0;
-  group.exercises.forEach(ex => {
-    const saved = data[ex.id];
-    const effective = getEffectiveValue(saved, ex);
-    if (effective > 0) {
-      const thresholds = getThresholds(ex);
-      const r = getRankForValue(thresholds, effective);
-      totalRankIdx += RANKS.findIndex(rr => rr.id === r.id);
-      count++;
-    }
-  });
-  if (!count) return RANKS[0]; // No entries = no rank shown (Bronze by default)
-  return RANKS[Math.min(Math.round(totalRankIdx/count), RANKS.length-1)];
-}
-
-function getOverallRankIdx() {
-  const allRanks = Object.keys(GYM_GROUPS).map(g => getMuscleRank(g));
-  if(allRanks.every(r=>r.id==='bronze')) return 0;
-  const avg = allRanks.reduce((s,r)=>s+RANKS.findIndex(rr=>rr.id===r.id),0)/allRanks.length;
-  return Math.round(avg);
-}
-
-function getOverallRank() { return RANKS[Math.min(getOverallRankIdx(), RANKS.length-1)]; }
-
-function getHighestGymRank() {
-  const allRanks = Object.keys(GYM_GROUPS).map(g => getMuscleRank(g));
-  let max = 0;
-  allRanks.forEach(r => { const idx = RANKS.findIndex(rr=>rr.id===r.id); if(idx>max) max=idx; });
-  return max;
-}
-
-window.gymTab = function(groupKey, btn) {
-  currentGymGroup = groupKey;
-  document.querySelectorAll('#page-gym .tab').forEach(t => t.classList.remove('active'));
-  btn.classList.add('active');
-  renderGymPage();
-};
-
-// ===== renderGymPage =====
 function getEffectiveValue(saved, ex) {
   // Combine weight + reps into an effective score for ranking
   // Uses Epley formula approximation: effective = weight × (1 + reps/30)
@@ -1602,7 +1555,9 @@ window.showPage = function(p,btn){
   document.getElementById('page-'+p)?.classList.add('active');
   btn.classList.add('active');
   if(p==='checkup'){renderCheckup();renderCustomTasksEditor();}
-  if(p==='trophies') renderTrophies();
+  if(p==='trophies') {
+    renderTrophies();
+  }
   if(p==='calendar') renderCalendar();
   if(p==='social'){renderLeaderboard();renderFriends();}
   if(p==='gym') renderGymPage();
@@ -2295,3 +2250,53 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
+
+function getThresholds(ex) {
+  const girlMode = window._userProfile?.girlMode || false;
+  if(!girlMode) return ex.thresholds;
+  return ex.thresholds.map((v,i) => i===0 ? 0 : Math.round(v*0.65));
+}
+
+function getMuscleRank(groupKey) {
+  const group = GYM_GROUPS[groupKey];
+  const data = getGymData();
+  let totalRankIdx = 0, count = 0;
+  group.exercises.forEach(ex => {
+    const saved = data[ex.id];
+    const effective = getEffectiveValue(saved, ex);
+    if (effective > 0) {
+      const thresholds = getThresholds(ex);
+      const r = getRankForValue(thresholds, effective);
+      totalRankIdx += RANKS.findIndex(rr => rr.id === r.id);
+      count++;
+    }
+  });
+  if (!count) return RANKS[0]; // No entries = no rank shown (Bronze by default)
+  return RANKS[Math.min(Math.round(totalRankIdx/count), RANKS.length-1)];
+}
+
+function getOverallRankIdx() {
+  const allRanks = Object.keys(GYM_GROUPS).map(g => getMuscleRank(g));
+  if(allRanks.every(r=>r.id==='bronze')) return 0;
+  const avg = allRanks.reduce((s,r)=>s+RANKS.findIndex(rr=>rr.id===r.id),0)/allRanks.length;
+  return Math.round(avg);
+}
+
+function getOverallRank() { return RANKS[Math.min(getOverallRankIdx(), RANKS.length-1)]; }
+
+function getHighestGymRank() {
+  const allRanks = Object.keys(GYM_GROUPS).map(g => getMuscleRank(g));
+  let max = 0;
+  allRanks.forEach(r => { const idx = RANKS.findIndex(rr=>rr.id===r.id); if(idx>max) max=idx; });
+  return max;
+}
+
+window.gymTab = function(groupKey, btn) {
+  currentGymGroup = groupKey;
+  document.querySelectorAll('#page-gym .tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  renderGymPage();
+};
+
+// ===== renderGymPage =====
+
